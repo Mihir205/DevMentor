@@ -1,0 +1,256 @@
+body, html, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.loginContainer {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    z-index: 0;
+}
+
+.leftPanelContent {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    color: white;
+}
+
+.leftPanelContent .branding {
+    text-align: center;
+    color: white;
+    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7);
+}
+
+.leftPanelContent h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+
+.leftPanelContent p {
+    font-size: 1.3rem;
+    font-weight: 300;
+}
+
+.rightPanelContent {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.loginFormWrapper {
+    width: 100%;
+    max-width: 600px;
+    min-height: 680px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.formHeader {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.welcomeMessage {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6c757d;
+    margin: 0;
+}
+
+.loginFormWrapper h2 {
+    font-size: 2.2rem;
+    color: #1B263B;
+    margin: 5px 0 0 0;
+}
+
+.socialButton {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #cdd0d4;
+    border-radius: 25px;
+    background-color: #fff;
+    color: #333;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    outline: none;
+}
+
+.socialButton:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.socialButton:active {
+    transform: translateY(0);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.socialIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #888;
+    margin: 25px 0;
+    font-size: 0.9rem;
+}
+
+.separator::before,
+.separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.separator:not(:empty)::before {
+    margin-right: 15px;
+}
+
+.separator:not(:empty)::after {
+    margin-left: 15px;
+}
+
+.loginForm {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.inputGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.inputGroup input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #6C7A89;
+    background-color: #EBF2F8;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #34495e;
+}
+
+.inputGroup input:focus {
+    outline: none;
+    border-color: #415A77;
+    box-shadow: 0 0 0 3px rgba(65, 90, 119, 0.2);
+}
+
+.formOptions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.rememberMe {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rememberMe label {
+    color: #495057;
+    cursor: pointer;
+}
+
+.forgotPassword, .signUpLink a {
+    color: #1B263B;
+    text-decoration: none;
+}
+
+.forgotPassword:hover, .signUpLink a:hover {
+    text-decoration: underline;
+}
+
+.submitButton {
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #1B263B;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.submitButton:hover {
+    background-color: #415A77;
+    transform: translateY(-1px);
+}
+.submitButton:active {
+    transform: translateY(0);
+}
+
+.signUpLink {
+    text-align: center;
+    margin-top: 25px;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .loginContainer {
+        flex-direction: column;
+    }
+
+    .leftPanelContent, .rightPanelContent {
+        flex: none;
+        position: relative;
+        width: 100%;
+        left: 0;
+    }
+    
+    .leftPanelContent {
+        min-height: 250px;
+    }
+    
+    .rightPanelContent {
+        padding: 1rem;
+    }
+
+    .loginFormWrapper {
+        min-height: 0;
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 100%;
+    }
+}

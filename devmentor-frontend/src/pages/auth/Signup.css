@@ -1,0 +1,217 @@
+body, html, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.signupContainer {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    z-index: 0;
+}
+
+.leftPanelContent {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    color: white;
+}
+
+.leftPanelContent .branding {
+    text-align: center;
+    color: white;
+    text-shadow: 0px 0px 8px rgba(0, 0, 0, 0.7);
+}
+
+.leftPanelContent h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+
+.leftPanelContent p {
+    font-size: 1.3rem;
+    font-weight: 300;
+}
+
+.rightPanelContent {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.signupFormWrapper {
+    width: 100%;
+    max-width: 600px;
+    min-height: 680px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.signupFormWrapper::-webkit-scrollbar {
+    width: 10px;
+}
+.signupFormWrapper::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 5px;
+}
+.signupFormWrapper::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+.signupFormWrapper h2 {
+    text-align: center;
+    font-size: 2.2rem;
+    color: #1B263B;
+    margin-bottom: 2rem;
+}
+
+.signupForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.formRow {
+    width: 100%;
+}
+
+.formTwoColumnRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.inputGroup {
+    margin-bottom: 0;
+}
+
+.inputGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.inputGroup input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid #6C7A89;
+    background-color: #EBF2F8;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #34495e;
+}
+
+.inputGroup input:focus {
+    outline: none;
+    border-color: #415A77;
+    box-shadow: 0 0 0 3px rgba(65, 90, 119, 0.2);
+}
+
+.termsGroup {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 5px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.termsGroup input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+.termsGroup a {
+    color: #1B263B;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.termsGroup a:hover {
+    text-decoration: underline;
+}
+
+.submitButton {
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #1B263B;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.submitButton:hover {
+    background-color: #415A77;
+    transform: translateY(-1px);
+}
+.submitButton:active {
+    transform: translateY(0);
+}
+
+.signInLink {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #6c757d;
+}
+
+.signInLink a {
+    color: #1B263B;
+    text-decoration: none;
+}
+
+.signInLink a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .signupContainer {
+        flex-direction: column;
+    }
+
+    .leftPanelContent {
+        min-height: 200px;
+        flex: none;
+    }
+
+    .rightPanelContent {
+        flex: 1;
+        padding: 1rem;
+    }
+
+    .signupFormWrapper {
+        min-height: 0;
+        padding: 1.5rem;
+        max-width: 90%;
+    }
+
+    .formTwoColumnRow {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
