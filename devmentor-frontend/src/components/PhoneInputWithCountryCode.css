@@ -1,0 +1,54 @@
+/* src/components/PhoneInputWithCountryCode.css */
+
+.phoneInputWrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 1px solid #374151; /* Match existing input borders */
+    background-color: #111621; /* Match existing input background */
+    border-radius: 0.5rem; /* Match existing input border-radius */
+    box-sizing: border-box;
+    overflow: hidden; /* Ensure rounded corners are applied correctly */
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.phoneInputWrapper:focus-within {
+    border-color: #0a255c; /* Primary color on focus */
+    box-shadow: 0 0 0 2px #0a255c;
+}
+
+.countrySelector {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0.75rem; /* Padding similar to your example */
+    border-right: 1px solid #374151; /* Separator line */
+    background-color: transparent; /* No extra background */
+    cursor: pointer; /* Indicates it's clickable */
+    user-select: none; /* Prevent text selection */
+}
+
+.countryFlag {
+    font-size: 1.25rem; /* Adjust flag size */
+    margin-right: 0.5rem;
+    line-height: 1; /* Keep flag aligned */
+}
+
+.countryCode {
+    color: #f0f2f5; /* Creamy white text */
+    font-weight: 500;
+    font-size: 1rem; /* Match input font size */
+}
+
+.phoneInputField {
+    flex-grow: 1; /* Take up remaining space */
+    border: none; /* Remove default input border */
+    background-color: transparent; /* Transparent background */
+    color: #f0f2f5; /* Creamy white text */
+    padding: 0.75rem 1rem; /* Match padding of other inputs */
+    font-size: 1rem;
+    outline: none; /* Remove outline on focus as parent handles it */
+}
+
+.phoneInputField::placeholder {
+    color: #6b7280; /* Match existing placeholder color */
+}
