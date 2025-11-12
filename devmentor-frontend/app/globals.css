@@ -1,0 +1,90 @@
+/* app/globals.css
+   Use @tailwind directives (do NOT use @import "tailwindcss/...") 
+*/
+
+/* Tailwind entry points (required) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------
+   1. Custom CSS Variables (DevMentor Palette)
+   --------------------------- */
+:root {
+  /* Colors - Light Theme */
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-primary: #007bff; /* Professional Blue */
+  --color-accent: #00c7b7; /* Techy Teal */
+  --color-card-bg: #f8f8f8; /* Subtle Card Background */
+  --color-border: #e0e0e0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Colors - Dark Theme */
+    --color-background: #0d0d0d;
+    --color-foreground: #ededed;
+    --color-primary: #4a90e2;
+    --color-accent: #00c7b7;
+    --color-card-bg: #1c1c1c;
+    --color-border: #333333;
+  }
+}
+
+/* ---------------------------
+   2. Base Styles and Typography
+   --------------------------- */
+/* Place global base rules in a Tailwind base layer so PostCSS/tailwind processes it predictably */
+@layer base {
+  html, body, #__next {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    font-family: 'Inter', 'Montserrat', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ---------------------------
+   3. Custom Tailwind Utility Classes
+   --------------------------- */
+/* Export custom properties into Tailwind's CSS variables (optional) */
+@layer base {
+  :root {
+    --tw-color-primary: var(--color-primary);
+    --tw-color-accent: var(--color-accent);
+    --tw-color-card-bg: var(--color-card-bg);
+    --tw-color-border: var(--color-border);
+  }
+}
+
+/* Add custom utilities */
+@layer utilities {
+  .glow-shadow {
+    box-shadow: 0 0 5px rgba(0, 199, 183, 0.5), 0 0 10px rgba(0, 199, 183, 0.3);
+    transition: box-shadow 0.3s ease-in-out;
+  }
+
+  .card-border {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card-bg);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .card-border:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .separator {
+    height: 1px;
+    background-color: var(--color-border);
+    margin: 1rem 0;
+  }
+}
