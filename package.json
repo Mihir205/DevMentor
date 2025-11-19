@@ -1,14 +1,11 @@
 {
-  "dependencies": {
-    "@hello-pangea/dnd": "^18.0.1",
-    "dayjs": "^1.11.19",
-    "jwt-decode": "^4.0.0",
-    "lucide-react": "^0.553.0",
-    "react-flow-renderer": "^10.3.17",
-    "reactflow": "^11.11.4",
-    "uuid": "^13.0.0"
+  "name": "devmentor-monorepo-proxy",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && npm ci && npm start",
+    "build": "cd backend && npm run build || true"
   },
-  "devDependencies": {
-    "@types/react": "^19.2.3"
+  "engines": {
+    "node": ">=18"
   }
 }
