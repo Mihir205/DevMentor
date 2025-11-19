@@ -25,13 +25,14 @@ type Props = {
   onAddToKanban?: (item: RoadmapItem) => Promise<any> | any;
   showAddToKanban?: boolean;
   heading?: string;
+  /**
+   * NEW: array of existing tasks currently in the Kanban board.
+   * Passing this allows the component to detect "already added" items reliably.
+   * Example value: columns.flatMap(c => c.tasks)
+   */
+  existingTasks?: any[] | null;
 };
 
-function nowIso() {
-  return new Date().toISOString();
-}
-
-// Helper function to format date consistently
 function formatShort(d?: string | null) {
   if (!d) return "";
   try {
@@ -43,6 +44,15 @@ function formatShort(d?: string | null) {
   }
 }
 
+/**
+ * RoadmapItemsList
+ * - Adds `existingTasks` prop to detect tasks already in Kanban.
+ * - Uses multiple heuristics to match items -> existing tasks:
+ *    • id match (if roadmap item stores `user_task_id` or similar)
+ *    • same title (loose)
+ *    • matching predefined_skill_id / skill id / source metadata
+ * - Keeps optimistic add behaviour and reverts on failure.
+ */
 export default function RoadmapItemsList({
   items = [],
   onClose,
@@ -50,109 +60,151 @@ export default function RoadmapItemsList({
   onAddToKanban,
   showAddToKanban = true,
   heading = "Roadmap Items",
+  existingTasks = null,
 }: Props) {
-  // Track which items have already been added to Kanban (by item.id string)
   const [addedSet, setAddedSet] = useState<Set<string | number>>(new Set());
   const [logs, setLogs] = useState<string[]>([]);
   const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
 
-  // derive whether an item is already added based on many possible shapes
-  function detectAlreadyAdded(it: RoadmapItem) {
-    // explicit flags
-    if (it.added === true || it.inKanban === true) return true;
+  // Helper to append log entries
+  function pushLog(msg: string) {
+    setLogs(prev => {
+      const next = [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev];
+      return next.slice(0, 40);
+    });
+  }
 
-    // presence of user task id(s)
+  // Detect if a roadmap item is already added (based on many shapes)
+  function detectAlreadyAddedLocal(it: RoadmapItem, existing: any[] | null) {
+    // 1) explicit flags in roadmap item
+    if (it.added === true || it.inKanban === true) return true;
     if (it.user_task_id || it.userTaskId) return true;
 
-    // nested shapes: it.raw.user_task_id or it.raw.userTaskId or it.raw.user_task?.id
+    // 2) inside raw field
     if (it.raw) {
       if (it.raw.user_task_id || it.raw.userTaskId) return true;
       if (it.raw.user_task && (it.raw.user_task.id || it.raw.user_task._id)) return true;
-      if (it.raw.user_predefined_goal_task_id) return true;
     }
 
-    // sometimes backend returns `task` or `createdTask` in the item
-    if ((it as any).task || (it as any).createdTask || (it as any).userTask) return true;
+    // 3) try to match against existingTasks passed from Kanban
+    if (Array.isArray(existing) && existing.length > 0) {
+      // canonicalize item keys for comparison
+      const itemIdStr = it.id != null ? String(it.id) : null;
+      const itemTitle = (it.title || "").trim().toLowerCase();
 
+      // also try to detect skill id / source ids from roadmap item (common fields)
+      const itemSkillId = (it as any).skill_id ?? (it as any).predefined_skill_id ?? (it.raw && (it.raw.skill_id ?? it.raw.predefined_skill_id));
+
+      for (const t of existing) {
+        if (!t) continue;
+        // many possible id fields in existing kanban task
+        const candidates = [
+          t.id,
+          t._id,
+          t.user_task_id,
+          t.userTaskId,
+          t.user_task?.id,
+          t.userTask?.id,
+          t.predefined_task_id,
+          t.predefined_skill_id,
+          t.skill_id,
+          t.predefined_project_id,
+          t.metadata?.sourceId,
+          t.metadata?.source_id,
+        ].filter(Boolean);
+
+        // id exact match if roadmap item carried a created task id
+        if (itemIdStr && candidates.some(c => String(c) === itemIdStr)) return true;
+
+        // title match (loose, case-insensitive)
+        if (typeof t.title === "string" && itemTitle && t.title.trim().toLowerCase() === itemTitle) return true;
+
+        // skill/predefined id match
+        const candSkillIds = [
+          t.skill_id,
+          t.predefined_skill_id,
+          t.predefined_task_id,
+          t.metadata?.skillId,
+          t.metadata?.sourceId,
+        ].filter(Boolean);
+
+        if (itemSkillId != null && candSkillIds.some(c => String(c) === String(itemSkillId))) return true;
+
+        // sometimes task metadata includes reference to roadmap item id
+        if (it.raw && typeof it.raw === "object") {
+          const rawRef = it.raw.reference_id ?? it.raw.refId ?? it.raw.sourceId;
+          if (rawRef && candidates.some(c => String(c) === String(rawRef))) return true;
+        }
+      }
+    }
+
+    // Not found
     return false;
   }
 
-  // initialize addedSet from incoming items
+  // Initialize addedSet from incoming items and existingTasks
   useEffect(() => {
+    // seed from items that carry their own added flags
     const s = new Set<string | number>();
     for (const it of items || []) {
-      if (detectAlreadyAdded(it)) s.add(String(it.id));
+      // if item explicitly indicates it's added, mark it
+      if (it.added === true || it.inKanban === true) s.add(String(it.id));
+      if (it.user_task_id || it.userTaskId) s.add(String(it.id));
     }
+
+    // also scan existingTasks to mark corresponding roadmap items as added
+    if (Array.isArray(existingTasks) && existingTasks.length > 0) {
+      for (const it of items || []) {
+        if (detectAlreadyAddedLocal(it, existingTasks)) s.add(String(it.id));
+      }
+    }
+
     setAddedSet(s);
-  }, [items]);
+  }, [items, existingTasks]);
 
-  // helper to push a log entry
-  function pushLog(msg: string) {
-    setLogs((prev) => {
-      const next = [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev];
-      return next.slice(0, 30); // keep last 30 logs
-    });
-  }
-
-  // Handle add-to-kanban click
+  // Handle adding an item
   async function handleAdd(item: RoadmapItem) {
     const key = String(item.id);
     if (addedSet.has(key)) {
-      pushLog(`Item ${key} already added — skipping.`);
+      pushLog(`Item ${key} already marked added — skipping.`);
       return;
     }
 
-    // optimistic update
-    setAddedSet((prev) => {
-      const n = new Set(prev);
-      n.add(key);
-      return n;
-    });
-    setBusyMap((m) => ({ ...m, [key]: true }));
-    pushLog(`Adding item ${key} ("${item.title}") to Kanban...`);
+    // optimistic
+    setAddedSet(prev => new Set(prev).add(key));
+    setBusyMap(m => ({ ...m, [key]: true }));
+    pushLog(`Adding ${key} "${item.title}" to Kanban…`);
 
     try {
       const result = await onAddToKanban?.(item);
 
-      // If result suggests failure, handle gracefully
-      // Accept various shapes: { ok: false, error }, thrown error, or success object
       if (result && result.ok === false) {
-        // treat as failure
-        const errMsg = result.error ?? "server rejected add";
-        pushLog(`Failed to add ${key}: ${errMsg}`);
+        // server rejected
+        pushLog(`Server rejected add: ${String(result.error ?? "unknown")}`);
         // revert optimistic
-        setAddedSet((prev) => {
+        setAddedSet(prev => {
           const n = new Set(prev);
           n.delete(key);
           return n;
         });
       } else {
-        // success: enrich log with returned identifier if present
+        // success: keep added state; optionally log returned id
         let detail = "";
         if (result && (result.id || result._id || result.user_task_id || result.createdTask?.id)) {
           const returnedId = result.id ?? result._id ?? result.user_task_id ?? result.createdTask?.id;
           detail = ` (created task ${returnedId})`;
-        } else if (result && typeof result === "object") {
-          // maybe result has nested shape userPredefinedGoal or userTask
-          if (result.userTask || result.user_task) {
-            const rt = result.userTask ?? result.user_task;
-            detail = ` (created task ${rt.id ?? rt._id ?? "?"})`;
-          }
         }
-        pushLog(`Added ${key} "${item.title}" to Kanban${detail}.`);
-        // Keep optimistic add (don't revert)
+        pushLog(`Added ${key}${detail}`);
       }
     } catch (err: any) {
-      // revert optimistic update on error
-      setAddedSet((prev) => {
+      pushLog(`Error adding ${key}: ${err?.message ?? String(err)}`);
+      setAddedSet(prev => {
         const n = new Set(prev);
         n.delete(key);
         return n;
       });
-      const em = err?.message ?? "Add failed";
-      pushLog(`Error adding ${key}: ${em}`);
     } finally {
-      setBusyMap((m) => {
+      setBusyMap(m => {
         const n = { ...m };
         delete n[key];
         return n;
@@ -177,12 +229,9 @@ export default function RoadmapItemsList({
           aria-modal="true"
           className="w-full max-w-4xl max-h-[84vh] overflow-auto card-border p-6 sm:p-8 rounded-xl shadow-2xl bg-[--color-card-bg] pointer-events-auto"
         >
-          {/* Header */}
           <div className="flex justify-between items-center gap-4 border-b border-[--color-border] pb-4 mb-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-[--color-primary]">
-                {heading}
-              </h2>
+              <h2 className="text-2xl font-extrabold text-[--color-primary]">{heading}</h2>
               <div className="text-sm text-[--color-foreground] opacity-70 mt-1">{count} items found</div>
             </div>
 
@@ -194,7 +243,6 @@ export default function RoadmapItemsList({
             </button>
           </div>
 
-          {/* Items */}
           <div className="flex flex-col gap-3">
             {count === 0 && (
               <div className="text-center opacity-60 p-8 border border-dashed border-[--color-border] rounded-lg">
@@ -202,25 +250,18 @@ export default function RoadmapItemsList({
               </div>
             )}
 
-            {items.map((it) => {
+            {items.map(it => {
               const key = String(it.id);
-              // treat as added if either in addedSet or detectAlreadyAdded
-              const alreadyAdded =
-                addedSet.has(key) || detectAlreadyAdded(it);
-
               const busy = Boolean(busyMap[key]);
 
+              // final check to decide if Add should be shown:
+              const alreadyAdded = addedSet.has(key) || detectAlreadyAddedLocal(it, existingTasks);
+
               return (
-                <div
-                  key={key}
-                  className="flex flex-col sm:flex-row gap-4 items-start p-4 rounded-xl border border-[--color-border] bg-[--color-background]/50 hover:bg-[--color-background] transition"
-                >
-                  {/* Details */}
+                <div key={key} className="flex flex-col sm:flex-row gap-4 items-start p-4 rounded-xl border border-[--color-border] bg-[--color-background]/50 hover:bg-[--color-background] transition">
                   <div className="flex-1 min-w-0">
                     <div className="text-lg font-bold text-[--color-accent]">{it.title}</div>
-                    {it.description && (
-                      <div className="mt-1 text-sm opacity-80 line-clamp-2">{it.description}</div>
-                    )}
+                    {it.description && <div className="mt-1 text-sm opacity-80 line-clamp-2">{it.description}</div>}
 
                     {(it.start || it.end) && (
                       <div className="mt-2 flex items-center text-xs opacity-60">
@@ -233,13 +274,7 @@ export default function RoadmapItemsList({
                     {Array.isArray(it.resources) && it.resources.length > 0 && (
                       <div className="mt-3 flex gap-3 flex-wrap">
                         {it.resources.map((r, idx) => (
-                          <a
-                            key={idx}
-                            href={r.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center text-xs font-mono text-[--color-primary] hover:text-[--color-accent] hover:underline"
-                          >
+                          <a key={idx} href={r.url} target="_blank" rel="noreferrer" className="flex items-center text-xs font-mono text-[--color-primary] hover:text-[--color-accent] hover:underline">
                             <LinkIcon className="w-3 h-3 mr-1" /> {r.label}
                           </a>
                         ))}
@@ -247,7 +282,6 @@ export default function RoadmapItemsList({
                     )}
                   </div>
 
-                  {/* Actions */}
                   <div className="flex-shrink-0 flex gap-3 mt-2 sm:mt-0">
                     <button
                       onClick={() => onPreview?.(it)}
@@ -288,9 +322,7 @@ export default function RoadmapItemsList({
               <div className="text-xs opacity-60 p-3 bg-[--color-card-bg] rounded">No actions yet.</div>
             ) : (
               <div className="max-h-40 overflow-auto text-xs font-mono bg-[--color-card-bg] p-2 rounded space-y-1">
-                {logs.map((l, i) => (
-                  <div key={i} className="text-[12px] opacity-80">{l}</div>
-                ))}
+                {logs.map((l, i) => <div key={i} className="text-[12px] opacity-80">{l}</div>)}
               </div>
             )}
           </div>
