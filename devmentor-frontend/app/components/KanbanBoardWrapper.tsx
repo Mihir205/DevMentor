@@ -354,10 +354,10 @@ export default function KanbanBoardWrapper({
     const dragProps = isProject
       ? {}
       : {
-          draggable: true,
-          onDragStart: (e: React.DragEvent) => onDragStart(e, task.id),
-          onDragEnd: onDragEnd,
-        };
+        draggable: true,
+        onDragStart: (e: React.DragEvent) => onDragStart(e, task.id),
+        onDragEnd: onDragEnd,
+      };
 
     if (isProject && !matchesSelectedProject && selectedProject) return null;
 
@@ -486,6 +486,10 @@ export default function KanbanBoardWrapper({
           body,
         }
       );
+      if (!sel.ok) {
+        setError(sel.body?.error || sel.body?.message || "Failed to select project");
+        return;
+      }
 
       // refresh local selection & board (the project will be injected into columns only when progressPercentage === 100)
       await fetchSelectedProject();

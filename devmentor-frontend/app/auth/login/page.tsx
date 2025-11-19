@@ -1,4 +1,3 @@
-// app/auth/login/page.tsx
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -33,7 +32,7 @@ export default function LoginPage() {
       });
 
       if (!data?.token) {
-        setErrorMessage("Invalid login response from server.");
+        setErrorMessage("Invalid Credentials.");
         setLoading(false);
         return;
       }
@@ -136,7 +135,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className={InputClass + " mb-2"}
+              className={InputClass + " mb-6"}
             />
             <button
               type="button"
@@ -145,15 +144,6 @@ export default function LoginPage() {
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-          </div>
-
-          <div className="text-right mb-6">
-            <Link
-              href="/auth/forgot-password"
-              className="text-xs font-medium text-[--color-primary] opacity-80 hover:opacity-100 hover:underline"
-            >
-              Forgot Password?
-            </Link>
           </div>
 
           <button type="submit" disabled={loading} className={ButtonClass}>

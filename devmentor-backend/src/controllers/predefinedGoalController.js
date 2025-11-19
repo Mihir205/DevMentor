@@ -49,7 +49,7 @@ export const postUserSelectPredefinedGoal = async (req, res) => {
     const upg = await model.addUserPredefinedGoal(userId, predefinedGoalId);
 
     // fetch suggested mini-projects (DO NOT insert them into user_tasks)
-    const suggestedProjects = await model.getSuggestedProjectsForPredefinedGoal(predefinedGoalId);
+    const suggestedProjects = await model.getSuggestedProjectsForUserPredefinedGoal(predefinedGoalId);
 
     // Legacy/admin behavior — populate tasks only if explicitly requested via query param ?populate=true
     const populateFlag = String(req.query?.populate ?? "").toLowerCase();

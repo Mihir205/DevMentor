@@ -108,9 +108,8 @@
 }
 
 .kanban-column {
-  min-width: 320px;
-  max-width: 380px;
-  flex: 0 0 320px;
+  flex: 1;
+  min-width: 280px;
   background: var(--color-card-bg);
   border-radius: 12px;
   padding: 14px;
