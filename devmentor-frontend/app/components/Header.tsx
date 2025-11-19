@@ -67,7 +67,6 @@ export default function Header() {
           </>
         ) : (
           <>
-            <NavLink href="/preview">Preview</NavLink>
           </>
         )}
       </nav>

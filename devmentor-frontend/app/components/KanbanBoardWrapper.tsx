@@ -1,5 +1,6 @@
 // components/KanbanBoardWrapper.tsx
 "use client";
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import api from "../lib/api";
@@ -353,10 +354,10 @@ export default function KanbanBoardWrapper({
     const dragProps = isProject
       ? {}
       : {
-        draggable: true,
-        onDragStart: (e: React.DragEvent) => onDragStart(e, task.id),
-        onDragEnd: onDragEnd,
-      };
+          draggable: true,
+          onDragStart: (e: React.DragEvent) => onDragStart(e, task.id),
+          onDragEnd: onDragEnd,
+        };
 
     if (isProject && !matchesSelectedProject && selectedProject) return null;
 
@@ -397,8 +398,30 @@ export default function KanbanBoardWrapper({
     );
   }
 
+  // compute progress percentage using consistent logic:
+  // prefer skills (doneSkills/totalSkills) else fallback to tasks (doneTasks/totalTasks)
+  const progressPercentage = (() => {
+    if (!progressInfo) return 0;
+
+    const totalSkills = Number(progressInfo.totalSkills ?? 0);
+    const doneSkills = Number(progressInfo.doneSkills ?? 0);
+    const totalTasks = Number(progressInfo.totalTasks ?? 0);
+    const doneTasks = Number(progressInfo.doneTasks ?? 0);
+
+    if (totalSkills > 0) {
+      return Math.round((doneTasks / totalSkills) * 100);
+    } else if (totalTasks > 0) {
+      return Math.round((doneTasks / totalSkills) * 100);
+    }
+    return 0;
+  })();
+
+  const canSelectProjects = true; // we allow selecting at any time (POST will be attempted)
+  // BUT: only inject the selected project into the kanban columns when progressPercentage === 100
+
   const injectSelectedProjectIntoColumns = (cols: Column[]) => {
-    if (!selectedProject) return cols;
+    // only inject if we have a selectedProject and progress is 100%
+    if (!selectedProject || progressPercentage < 100) return cols;
 
     const syntheticTask = {
       id: `proj-${selectedProject.predefined_project_id}`,
@@ -431,48 +454,30 @@ export default function KanbanBoardWrapper({
   };
 
   useEffect(() => {
+    // whenever selectedProject or progress changes, make sure injection reflects the new state
     setColumns((prev) => injectSelectedProjectIntoColumns(prev));
-  }, [selectedProject]);
+  }, [selectedProject, progressPercentage]);
 
   useEffect(() => {
+    // also ensure we re-inject on refreshTrigger (or whenever board data changes)
     (async () => {
       await Promise.resolve();
       setColumns((prev) => injectSelectedProjectIntoColumns(prev));
     })();
   }, [refreshTrigger]);
 
-  // --- Progress percentage calculation (fixed)
-  const progressPercentage = (() => {
-    if (!progressInfo) return 0;
-
-    const totalSkills = Number(progressInfo.totalSkills ?? 0);
-    const doneSkills = Number(progressInfo.doneSkills ?? 0);
-    const totalTasks = Number(progressInfo.totalTasks ?? 0);
-    const doneTasks = Number(progressInfo.doneTasks ?? 0);
-
-    if (totalSkills > 0) {
-      return Math.round((doneTasks / totalSkills) * 100);
-    } else if (totalTasks > 0) {
-      return Math.round((doneTasks / totalSkills) * 100);
-    }
-    return 0;
-  })();
-
-  const canSelectProjects = progressPercentage === 100;
-
-  // replace existing handleSelectProject with this implementation
+  // Handle selecting project (we will POST regardless of current progress)
   const handleSelectProject = async (projectId: number) => {
     try {
       setError(null);
-
       if (!userId || !token || !userPredefinedGoalId) {
         setError("Not authenticated or missing context.");
         return;
       }
 
-      // Directly POST selection (no progress checks)
       setSelectingProject(projectId);
       const body = { predefinedProjectId: projectId };
+      // ensure your api helper JSON-stringifies the body when Content-Type is JSON.
       const sel = await api(
         `/api/users/${userId}/predefined-goals/${userPredefinedGoalId}/select-project`,
         {
@@ -482,9 +487,7 @@ export default function KanbanBoardWrapper({
         }
       );
 
-      console.debug("[selectProject] response", sel);
-
-      // Refresh selection & board after success
+      // refresh local selection & board (the project will be injected into columns only when progressPercentage === 100)
       await fetchSelectedProject();
       await fetchBoard();
       onAfterAction?.();
@@ -497,6 +500,10 @@ export default function KanbanBoardWrapper({
     } finally {
       setSelectingProject(null);
     }
+  };
+
+  const handleRefreshAll = async () => {
+    await Promise.allSettled([fetchBoard(), fetchSuggestions(), fetchSelectedProject(), checkProgress()]);
   };
 
   return (
@@ -547,7 +554,7 @@ export default function KanbanBoardWrapper({
           </div>
         </div>
 
-        {canSelectProjects && (
+        {progressPercentage === 100 && (
           <div className="progress-complete-banner">
             <CheckCircle className="w-5 h-5" />
             <span>100% — Final projects unlocked. Pick one below.</span>
@@ -587,14 +594,10 @@ export default function KanbanBoardWrapper({
           <div className="projects-title-wrapper">
             <Target className="w-6 h-6" />
             <h2 className="projects-title">Final Projects</h2>
-            {!canSelectProjects && <Lock className="w-5 h-5 text-gray-400" />}
+            {progressPercentage < 100 && <Lock className="w-5 h-5 text-gray-400" />}
           </div>
           <button
-            onClick={() => {
-              fetchSuggestions();
-              fetchSelectedProject();
-              checkProgress();
-            }}
+            onClick={handleRefreshAll}
             className="refresh-projects-btn"
             disabled={loadingSuggestions}
           >
@@ -603,22 +606,16 @@ export default function KanbanBoardWrapper({
           </button>
         </div>
 
-        {!canSelectProjects && (
-          <div className="projects-locked-state">
-            <Lock className="w-12 h-12 text-gray-300" />
-            <h3>Projects Locked</h3>
-            <p>Reach 100% progress to unlock final projects</p>
-          </div>
-        )}
-
-        {canSelectProjects && loadingSuggestions && (
+        {/* Note: projects are shown to the user to pick from, but the selected project will only be injected into the Kanban
+            board when progressPercentage === 100 (see injectSelectedProjectIntoColumns above). */}
+        {loadingSuggestions && (
           <div className="projects-loading">
             <RefreshCw className="w-6 h-6 animate-spin" />
             <span>Loading projects...</span>
           </div>
         )}
 
-        {canSelectProjects && !loadingSuggestions && suggestions && suggestions.length > 0 && (
+        {!loadingSuggestions && suggestions && suggestions.length > 0 && (
           <div className="projects-grid">
             {suggestions.map((project) => {
               const isSelected = selectedProject &&
@@ -630,7 +627,7 @@ export default function KanbanBoardWrapper({
                 <div
                   key={project.id}
                   className={`project-card ${isSelected ? 'project-card-selected' : ''} ${isSelecting ? 'project-card-loading' : ''}`}
-                  onClick={() => !isSelected && !isSelecting && handleSelectProject(project.id)}
+                  onClick={() => !isSelecting && handleSelectProject(project.id)}
                 >
                   {isSelected && (
                     <div className="project-selected-badge">
@@ -684,7 +681,7 @@ export default function KanbanBoardWrapper({
           </div>
         )}
 
-        {canSelectProjects && !loadingSuggestions && (!suggestions || suggestions.length === 0) && (
+        {!loadingSuggestions && (!suggestions || suggestions.length === 0) && (
           <div className="projects-empty-state">
             <Target className="w-12 h-12 text-gray-300" />
             <h3>No Projects Available</h3>

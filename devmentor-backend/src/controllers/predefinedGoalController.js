@@ -1,3 +1,4 @@
+// src/controllers/predefinedGoalController.js
 import * as model from "../models/predefinedGoalModel.js";
 
 export const getPredefinedGoals = async (req, res) => {
@@ -48,7 +49,7 @@ export const postUserSelectPredefinedGoal = async (req, res) => {
     const upg = await model.addUserPredefinedGoal(userId, predefinedGoalId);
 
     // fetch suggested mini-projects (DO NOT insert them into user_tasks)
-    const suggestedProjects = await model.getSuggestedProjectsForUserPredefinedGoal(predefinedGoalId);
+    const suggestedProjects = await model.getSuggestedProjectsForPredefinedGoal(predefinedGoalId);
 
     // Legacy/admin behavior — populate tasks only if explicitly requested via query param ?populate=true
     const populateFlag = String(req.query?.populate ?? "").toLowerCase();
@@ -148,7 +149,7 @@ export const getProgressForUserPredefinedGoal = async (req, res) => {
   }
 };
 
-/* POST select a final project for a user's selected goal (only if all tasks done) */
+/* POST select a final project for a user's selected goal (only if progress indicates 100%) */
 export const postSelectProjectForUserPredefinedGoal = async (req, res) => {
   try {
     const userId = Number(req.params.userId);
@@ -165,15 +166,34 @@ export const postSelectProjectForUserPredefinedGoal = async (req, res) => {
     if (!upg) return res.status(404).json({ ok: false, error: "user_predefined_goal not found" });
     if (upg.user_id !== userId) return res.status(403).json({ ok: false, error: "Forbidden" });
 
-    // ensure all tasks are done
+    // fetch progress to compute percentage (prefer skills, otherwise tasks)
     const progress = await model.getProgressForUserPredefinedGoal(userPredefinedGoalId);
-    if (!progress.allDone) {
-      return res.status(400).json({ ok: false, error: "All tasks must be completed (and non-empty) before selecting a project", progress });
+
+    // normalize fields
+    const totalSkills = Number(progress?.totalSkills ?? progress?.total_skills ?? 0);
+    const doneSkills = Number(progress?.doneSkills ?? progress?.done_skills ?? 0);
+    const totalTasks = Number(progress?.totalTasks ?? progress?.total_tasks ?? 0);
+    const doneTasks = Number(progress?.doneTasks ?? progress?.done_tasks ?? 0);
+
+    // compute percent: prefer skills, else tasks
+    let pct = 0;
+    if (totalSkills > 0) pct = Math.round((doneTasks / totalSkills) * 100);
+    else if (totalTasks > 0) pct = Math.round((doneTasks / totalSkills) * 100);
+
+    // Accept selection only when percentage indicates completion (>= 100)
+    if (pct < 100) {
+      return res.status(400).json({
+        ok: false,
+        error: "All tasks/skills must be completed (100%) before selecting a project",
+        progress: { totalTasks, doneTasks, totalSkills, doneSkills, percent: pct }
+      });
     }
 
     // persist selection
     const result = await model.selectProjectForUserPredefinedGoal(userPredefinedGoalId, predefinedProjectId);
-    return res.status(201).json({ ok: true, selected: result.selected, project: result.project });
+
+    // If your model returns the selection row and project row separately, adapt this return shape.
+    return res.status(201).json({ ok: true, selected: result.selected ?? result, project: result.project ?? null });
   } catch (err) {
     console.error("postSelectProjectForUserPredefinedGoal", err);
     return res.status(500).json({ ok: false, error: "Server error" });
