@@ -1,10 +1,9 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../lib/api";
-// REMOVED: import GoalCard from "../components/GoalCard"; 
 import { getAuth } from "../lib/auth";
 import { useRouter } from "next/navigation";
-import { PlusCircle, Loader2, AlertTriangle, Zap, Edit, Link as LinkIcon } from "lucide-react";
+import { PlusCircle, Loader2, AlertTriangle, Zap, Link as LinkIcon } from "lucide-react";
 
 type Goal = {
   id: number | string;
@@ -22,7 +21,8 @@ export default function GoalSetupPage() {
 
   const [auth, setAuth] = useState<{ token: string | null; user: any | null }>(() => getAuth());
 
-  // --- Logic (Retained) ---
+  // map of predefined_goal_id -> user_predefined_goal_id when user already selected a template
+  const [selectedMap, setSelectedMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const onAuth = () => setAuth(getAuth());
@@ -52,20 +52,64 @@ export default function GoalSetupPage() {
     }
   }, []);
 
-  useEffect(() => { loadGoals(); }, [loadGoals, auth.token]);
+  // load user's selected templates (if logged in) and build selectedMap
+  const loadUserSelections = useCallback(async () => {
+    try {
+      const { token, user } = getAuth();
+      if (!token || !user) {
+        setSelectedMap({});
+        return;
+      }
+      const userId = user.id ?? user._id;
+      const res = await api(`/api/users/${userId}/predefined-goals`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // res.userGoals expected to be array with fields: user_predefined_goal_id, predefined_goal_id, ...
+      const arr = Array.isArray(res?.userGoals) ? res.userGoals : res?.user_goals ?? [];
+      const map: Record<string, number> = {};
+      for (const item of arr) {
+        const predefinedId = item.predefined_goal_id ?? item.predefinedGoalId ?? item.predefinedGoal?.id;
+        const upgId = item.user_predefined_goal_id ?? item.userPredefinedGoalId ?? item.id ?? item.upg_id;
+        if (predefinedId != null && upgId != null) {
+          map[String(predefinedId)] = Number(upgId);
+        } else if (item.predefined_goal_id && item.user_predefined_goal_id) {
+          map[String(item.predefined_goal_id)] = Number(item.user_predefined_goal_id);
+        }
+      }
+      setSelectedMap(map);
+    } catch (err) {
+      console.warn("loadUserSelections failed", err);
+      setSelectedMap({});
+    }
+  }, []);
 
-  async function startGoal(id: number | string) {
-    const token = auth.token;
-    const user = auth.user;
+  useEffect(() => {
+    loadGoals();
+    loadUserSelections();
+    // re-run when auth changes (simple approach)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.token]);
+
+  async function startGoal(predefinedGoalId: number | string) {
+    const { token, user } = getAuth();
     if (!user || !token) {
       router.push("/auth/login");
       return;
     }
+
+    // if already selected, navigate to roadmap (use mapped upg id)
+    const existingUpgId = selectedMap[String(predefinedGoalId)];
+    if (existingUpgId) {
+      router.push(`/roadmap/${existingUpgId}`);
+      return;
+    }
+
     setError(null);
-    setStartingId(id);
-    
+    setStartingId(predefinedGoalId);
+
     try {
-      const payload = { predefinedGoalId: id };
+      const payload = { predefinedGoalId };
       const userId = user.id ?? user._id;
 
       const res = await api(`/api/users/${userId}/predefined-goals`, {
@@ -74,15 +118,31 @@ export default function GoalSetupPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const upgId = res?.userPredefinedGoal?.id ?? res?.id ?? res?.user_predefined_goal_id ?? res?.userPredefinedGoal?._id ?? res?.createdId;
+      // try to derive returned userPredefinedGoal id from a few shapes
+      const upgId = res?.userPredefinedGoal?.id ?? res?.userPredefinedGoal?.user_predefined_goal_id
+                  ?? res?.userPredefinedGoal?.user_predefined_goal_id ?? res?.userPredefinedGoal?.id
+                  ?? res?.userPredefinedGoalId ?? res?.user_predefined_goal_id
+                  ?? res?.userPredefinedGoal?.id ?? res?.userPredefinedGoalId ?? res?.id
+                  ?? res?.userPredefinedGoal?.user_predefined_goal_id;
 
+      // The controller returns userPredefinedGoal in "userPredefinedGoal" or "userPredefinedGoal" shapes.
+      // If we cannot parse it, fallback to refreshing selections and directing user to roadmap list.
       if (upgId) {
+        // refresh selected map and navigate to roadmap for this created UPG
+        await loadUserSelections();
         router.push(`/roadmap/${upgId}`);
         return;
       }
-      
-      setError("Goal started, but server ID confirmation failed.");
 
+      // fallback: refresh selections and attempt to find newly created mapping
+      await loadUserSelections();
+      const mapped = selectedMap[String(predefinedGoalId)];
+      if (mapped) {
+        router.push(`/roadmap/${mapped}`);
+        return;
+      }
+
+      setError("Goal started, but server ID confirmation failed.");
     } catch (err: any) {
       console.error("[GoalSetup] startGoal error:", err);
       setError(err?.message || "Failed to start goal. Please try again.");
@@ -91,23 +151,15 @@ export default function GoalSetupPage() {
     }
   }
 
-  const handleCreateCustom = () => {
-    // Implement navigation to your custom goal creation form here
-    router.push("/goal-setup/new");
-  };
-  
   const currentGoalId = (g: any) => g.id ?? g._id;
   const isStarting = (id: number | string) => String(startingId) === String(id);
-  
-  // --- UI Rendering ---
-  
+
   return (
     <div className="p-4 md:p-8">
-      
       {/* Header */}
       <header className="mb-8 border-b border-[--color-border] pb-4">
         <h1 className="text-3xl font-extrabold tracking-tight text-[--color-foreground]">
-          <Zap className="w-8 h-8 mr-2 inline text-[--color-accent]" /> Select or Create Goal
+          <Zap className="w-8 h-8 mr-2 inline text-[--color-accent]" /> Select a Goal
         </h1>
         <p className="text-md text-[--color-foreground] opacity-70 mt-1">
           Pick a template to begin instantly, or define your own path.
@@ -123,25 +175,6 @@ export default function GoalSetupPage() {
 
       {/* Grid Container for Templates and Custom Goal Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-
-        {/* 1. Create Custom Goal Card (Primary CTA) */}
-        <div 
-          onClick={handleCreateCustom}
-          className="card-border p-6 flex flex-col items-center justify-center min-h-[180px] text-center border-2 border-dashed border-[--color-primary] cursor-pointer bg-[--color-card-bg] hover:bg-[--color-primary]/10 transition-all duration-300"
-        >
-          <PlusCircle className="w-10 h-10 text-[--color-primary] mb-3" />
-          <div className="text-xl font-bold text-[--color-primary] mb-1">
-            Create Custom Goal
-          </div>
-          <p className="text-sm text-[--color-foreground] opacity-75">
-            Design a unique roadmap from scratch.
-          </p>
-          <button className="mt-4 px-4 py-2 text-sm font-semibold rounded-lg bg-[--color-primary] text-white hover:bg-[--color-accent] hover:text-black transition-colors">
-            <Edit className="w-4 h-4 mr-1 inline" /> Define Now
-          </button>
-        </div>
-
-        {/* 2. Predefined Goals List */}
         {loading ? (
           <div className="p-6 card-border text-center text-[--color-primary] flex items-center justify-center col-span-full">
             <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Loading goal templates...
@@ -151,51 +184,68 @@ export default function GoalSetupPage() {
             No predefined goals available. Start by creating a custom one!
           </div>
         ) : (
-          goals.map((g: any) => (
-            // APPLYING STYLING DIRECTLY TO THE MAPPED DIV (Goal Card alternative)
-            <div 
-                key={currentGoalId(g)} 
+          goals.map((g: any) => {
+            const pid = String(currentGoalId(g));
+            const upgId = selectedMap[pid]; // undefined if not selected
+            return (
+              <div
+                key={pid}
                 className="card-border p-5 flex flex-col justify-between min-h-[180px] shadow-lg hover:shadow-xl transition-shadow duration-300"
-            >
-                {/* Card Content Area */}
+              >
                 <div>
+                  <div className="flex items-start justify-between gap-3">
                     <h3 className="text-xl font-bold mb-2 text-[--color-accent]">{g.title}</h3>
-                    <p className="text-sm text-[--color-foreground] opacity-75 mb-3 leading-relaxed">{g.description}</p>
+                    {upgId ? (
+                      <div className="text-xs px-2 py-0.5 rounded-full bg-[--color-border] text-[--color-foreground] opacity-90">Selected</div>
+                    ) : null}
+                  </div>
+
+                  <p className="text-sm text-[--color-foreground] opacity-75 mb-3 leading-relaxed">{g.description}</p>
                 </div>
 
-                {/* Card Actions Area */}
                 <div className="mt-4 flex gap-3 justify-end items-center border-t border-[--color-border] pt-3">
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); router.push(`/predefined/${currentGoalId(g)}/roadmap`); }}
-                        className="px-3 py-1 text-sm font-medium text-[--color-primary] hover:underline"
-                    >
-                        <LinkIcon className="w-4 h-4 mr-1 inline" /> Preview
-                    </button>
-                    
+                  <button
+                    onClick={(e) => { e.stopPropagation(); router.push(`/predefined/${currentGoalId(g)}/roadmap`); }}
+                    className="px-3 py-1 text-sm font-medium text-[--color-primary] hover:underline"
+                  >
+                    <LinkIcon className="w-4 h-4 mr-1 inline" /> Preview
+                  </button>
+
+                  {upgId ? (
+                    // user already selected this template -> show "View progress / roadmap"
                     <button
-                        onClick={() => startGoal(currentGoalId(g))}
-                        disabled={isStarting(currentGoalId(g))}
-                        className={`
-                            flex items-center px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 shadow-md 
-                            ${isStarting(currentGoalId(g))
-                                ? "bg-gray-500 text-white cursor-not-allowed opacity-70"
-                                : "bg-[--color-accent] text-black hover:bg-[--color-primary] hover:text-white active:scale-[0.98]"
-                            }
-                        `}
+                      onClick={() => router.push(`/roadmap/${upgId}`)}
+                      className="flex items-center px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 shadow-md bg-[--color-border] text-[--color-foreground]"
                     >
-                        {isStarting(currentGoalId(g)) ? (
-                            <span className="flex items-center">
-                                <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Starting…
-                            </span>
-                        ) : (
-                            <span className="flex items-center">
-                                <Zap className="w-4 h-4 mr-1" /> Select Template
-                            </span>
-                        )}
+                      <LinkIcon className="w-4 h-4 mr-1" /> View
                     </button>
+                  ) : (
+                    <button
+                      onClick={() => startGoal(currentGoalId(g))}
+                      disabled={isStarting(currentGoalId(g))}
+                      className={`
+                        flex items-center px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 shadow-md 
+                        ${isStarting(currentGoalId(g))
+                          ? "bg-gray-500 text-white cursor-not-allowed opacity-70"
+                          : "bg-[--color-accent] text-black hover:bg-[--color-primary] hover:text-white active:scale-[0.98]"
+                        }
+                      `}
+                    >
+                      {isStarting(currentGoalId(g)) ? (
+                        <span className="flex items-center">
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Starting…
+                        </span>
+                      ) : (
+                        <span className="flex items-center">
+                          <Zap className="w-4 h-4 mr-1" /> Select Template
+                        </span>
+                      )}
+                    </button>
+                  )}
                 </div>
-            </div>
-          ))
+              </div>
+            );
+          })
         )}
       </div>
     </div>

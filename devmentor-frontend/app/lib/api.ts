@@ -15,18 +15,35 @@ export interface ApiOptions {
   body?: unknown;
   token?: string | null;
   headers?: Record<string, string>;
-  /**
-   * If true, `path` is treated as a full absolute URL and API_BASE is not prepended.
-   * Useful for bypassing the base in special cases.
-   */
   fullUrl?: boolean;
 }
 
-export default async function api(path: string, opts: ApiOptions = {}) {
+/**
+ * Defensive API helper with debug info for diagnosing non-string 'path' issues.
+ */
+export default async function api(path: any, opts: ApiOptions = {}) {
   const { method = "GET", body = null, token = null, headers = {}, fullUrl = false } = opts;
 
-  // allow absolute url or local path
-  const url = fullUrl || /^https?:\/\//i.test(path) ? path : `${API_BASE}${path.startsWith("/") ? path : "/" + path}`;
+  // Debug: log the incoming path type/value and call stack to trace the caller
+  try {
+    // Keep this as debug output — remove once issue resolved
+    // eslint-disable-next-line no-console
+    console.debug("[api] called with path:", { path, type: typeof path, isURL: path instanceof URL });
+    // Print stack so we can see the caller file/line
+    // eslint-disable-next-line no-console
+    console.trace("[api] call trace");
+  } catch (e) {
+    // ignore logging failures
+  }
+
+  // Normalize path to string (very defensive)
+  const pathStr = typeof path === "string" ? path : (path instanceof URL ? path.toString() : String(path));
+
+  // Detect absolute URL
+  const isAbsolute = Boolean(fullUrl) || /^https?:\/\//i.test(pathStr);
+
+  // Always call startsWith on a string (String(pathStr))
+  const url = isAbsolute ? pathStr : `${API_BASE}${String(pathStr).startsWith("/") ? pathStr : "/" + pathStr}`;
 
   const init: RequestInit = {
     method,
@@ -42,17 +59,29 @@ export default async function api(path: string, opts: ApiOptions = {}) {
   try {
     const res = await fetch(url, init);
     const data = await parseRes(res);
+
     if (!res.ok) {
       const err = new Error((data && (data.error || data.message)) || `HTTP ${res.status}`);
       (err as any).status = res.status;
       (err as any).body = data;
+      if (typeof window !== "undefined") console.debug("api response error:", { url, method, status: res.status, body: data });
       throw err;
     }
+
     return data;
   } catch (err: any) {
-    // Normalize network errors to a helpful message (so your UI can show it)
-    console.error("api fetch error:", { url, opts, err });
-    if (err instanceof TypeError && /failed to fetch/i.test(err.message)) {
+    const isNetwork = err instanceof TypeError && /failed to fetch/i.test(err.message);
+    try {
+      if (isNetwork) {
+        console.error("api network error:", { url, method, message: err.message });
+      } else if (!(err && (err as any).status)) {
+        console.error("api unexpected error:", { url, method, name: err?.name, message: err?.message, stack: err?.stack });
+      }
+    } catch (logErr) {
+      console.error("api logging failed:", logErr);
+    }
+
+    if (isNetwork) {
       throw new Error(`Network error: failed to reach ${url}. Is your backend running at ${API_BASE}?`);
     }
     throw err;

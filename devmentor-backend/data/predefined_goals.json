@@ -11,21 +11,30 @@
       { "key": "testing", "title": "Testing & Deployment", "description": "Unit tests, CI, Docker, Deploy", "position": 5, "difficulty": 3 }
     ],
     "edges": [
-      { "from_key": "node-basics", "to_key": "express", "note": "Learn Node basics before Express" },
-      { "from_key": "express", "to_key": "databases", "note": "Use Express to build APIs that persist data" },
-      { "from_key": "databases", "to_key": "auth", "note": "Understanding DBs helps with auth" },
-      { "from_key": "auth", "to_key": "testing", "note": "Test auth flows before deploying" }
+      { "from_key": "node-basics", "to_key": "express" },
+      { "from_key": "express", "to_key": "databases" },
+      { "from_key": "databases", "to_key": "auth" },
+      { "from_key": "auth", "to_key": "testing" }
     ],
     "resources": [
-      { "skill_key": "node-basics", "title": "Official Node.js Docs", "type": "docs", "url": "https://nodejs.org/en/docs/" },
-      { "skill_key": "express", "title": "Express Guide", "type": "docs", "url": "https://expressjs.com/" },
-      { "skill_key": "databases", "title": "Postgres Tutorial", "type": "course", "url": "https://www.postgresql.org/docs/" },
-      { "skill_key": "auth", "title": "JWT Authentication Guide", "type": "video", "url": "https://www.youtube.com/watch?v=7Q17ubqLfaM" },
-      { "skill_key": "testing", "title": "Testing Node.js", "type": "article", "url": "https://nodejs.dev/learn" }
+      { "skill_key": "node-basics", "title": "Node.js Official API Docs", "type": "docs", "url": "https://nodejs.org/api/" },
+      { "skill_key": "node-basics", "title": "Node.js Crash Course — Traversy Media", "type": "video", "url": "https://www.youtube.com/watch?v=fBNz5xF-Kx4" },
+
+      { "skill_key": "express", "title": "Express.js Guide (official)", "type": "docs", "url": "https://expressjs.com/en/guide/routing.html" },
+      { "skill_key": "express", "title": "Build a REST API with Express (DigitalOcean tutorial)", "type": "article", "url": "https://www.digitalocean.com/community/tutorials/nodejs-express-basics" },
+
+      { "skill_key": "databases", "title": "PostgreSQL Official Docs", "type": "docs", "url": "https://www.postgresql.org/docs/" },
+      { "skill_key": "databases", "title": "Postgres Tutorial — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=qw--VYLpxG4" },
+
+      { "skill_key": "auth", "title": "JWT Introduction — jwt.io", "type": "docs", "url": "https://jwt.io/introduction" },
+      { "skill_key": "auth", "title": "JWT Auth in Node — Traversy Media", "type": "video", "url": "https://www.youtube.com/watch?v=2jqok-WgelI" },
+
+      { "skill_key": "testing", "title": "Jest — Getting Started", "type": "docs", "url": "https://jestjs.io/docs/getting-started" },
+      { "skill_key": "testing", "title": "Testing Node.js APIs with Supertest & Jest", "type": "video", "url": "https://www.youtube.com/watch?v=7YcW25PHnAA" }
     ],
     "projects": [
-      { "skill_key": "express", "title": "Simple REST API", "description": "CRUD endpoints for a todo app", "difficulty": "beginner", "link": "" },
-      { "skill_key": "auth", "title": "Auth Mini-Project", "description": "Signup/login with JWT and protected routes", "difficulty": "intermediate", "link": "" }
+      { "skill_key": "express", "title": "Simple REST API", "description": "CRUD endpoints for a todo app", "difficulty": "beginner" },
+      { "skill_key": "auth", "title": "Auth Mini-Project", "description": "Signup/login with JWT and protected routes", "difficulty": "intermediate" }
     ]
   },
 
@@ -41,17 +50,29 @@
       { "key": "testing-react", "title": "Testing React", "description": "React Testing Library and Jest", "position": 5, "difficulty": 2 }
     ],
     "edges": [
-      { "from_key": "js-fundamentals", "to_key": "react-basics", "note": "" },
-      { "from_key": "react-basics", "to_key": "hooks", "note": "" },
-      { "from_key": "hooks", "to_key": "state-mgmt", "note": "Learn hooks before lifting state" }
+      { "from_key": "js-fundamentals", "to_key": "react-basics" },
+      { "from_key": "react-basics", "to_key": "hooks" },
+      { "from_key": "hooks", "to_key": "state-mgmt" }
     ],
     "resources": [
-      { "skill_key": "react-basics", "title": "React Official Docs", "type": "docs", "url": "https://reactjs.org/docs/getting-started.html" },
-      { "skill_key": "hooks", "title": "React Hooks Tutorial", "type": "video", "url": "https://www.youtube.com/watch?v=dpw9EHDh2bM" }
+      { "skill_key": "js-fundamentals", "title": "JavaScript.info — Modern JS guide", "type": "docs", "url": "https://javascript.info/" },
+      { "skill_key": "js-fundamentals", "title": "JavaScript Full Course — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=PkZNo7MFNFg" },
+
+      { "skill_key": "react-basics", "title": "React Official Docs", "type": "docs", "url": "https://react.dev/learn" },
+      { "skill_key": "react-basics", "title": "React Crash Course — Traversy Media", "type": "video", "url": "https://www.youtube.com/watch?v=w7ejDZ8SWv8" },
+
+      { "skill_key": "hooks", "title": "React Hooks — Guide", "type": "docs", "url": "https://react.dev/reference/react" },
+      { "skill_key": "hooks", "title": "Hooks Tutorial — Net Ninja", "type": "video", "url": "https://www.youtube.com/watch?v=TNhaISOUy6Q" },
+
+      { "skill_key": "state-mgmt", "title": "Redux Toolkit Docs", "type": "docs", "url": "https://redux-toolkit.js.org/" },
+      { "skill_key": "state-mgmt", "title": "Zustand Docs", "type": "docs", "url": "https://docs.pmnd.rs/zustand/getting-started/introduction" },
+
+      { "skill_key": "testing-react", "title": "React Testing Library Docs", "type": "docs", "url": "https://testing-library.com/docs/react-testing-library/intro/" },
+      { "skill_key": "testing-react", "title": "Testing React — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=-MlNBTSg_Ww" }
     ],
     "projects": [
-      { "skill_key": "react-basics", "title": "Personal Portfolio", "description": "Create a portfolio site with React router", "difficulty": "beginner" },
-      { "skill_key": "state-mgmt", "title": "Task Manager", "description": "Build a Kanban board with persistent state", "difficulty": "intermediate" }
+      { "skill_key": "react-basics", "title": "Portfolio", "description": "Create a React portfolio website", "difficulty": "beginner" },
+      { "skill_key": "state-mgmt", "title": "Task Manager", "description": "Kanban-style board with Zustand/Redux", "difficulty": "intermediate" }
     ]
   },
 
@@ -65,14 +86,21 @@
       { "key": "trees", "title": "Trees & Graphs", "description": "Traversal, BFS/DFS", "position": 3, "difficulty": 3 }
     ],
     "edges": [
-      { "from_key": "arrays", "to_key": "linkedlists", "note": "" },
-      { "from_key": "linkedlists", "to_key": "trees", "note": "" }
+      { "from_key": "arrays", "to_key": "linkedlists" },
+      { "from_key": "linkedlists", "to_key": "trees" }
     ],
     "resources": [
-      { "skill_key": "arrays", "title": "LeetCode - Arrays", "type": "practice", "url": "https://leetcode.com/tag/array/" }
+      { "skill_key": "arrays", "title": "LeetCode — Arrays tag", "type": "practice", "url": "https://leetcode.com/tag/array/" },
+      { "skill_key": "arrays", "title": "NeetCode Arrays Playlist", "type": "video", "url": "https://www.youtube.com/playlist?list=PLot-Xpze53ldVwtAscPOCzkDZJj0YAtx8" },
+
+      { "skill_key": "linkedlists", "title": "Linked Lists — GeeksforGeeks", "type": "article", "url": "https://www.geeksforgeeks.org/data-structures/linked-list/" },
+      { "skill_key": "linkedlists", "title": "Linked Lists — NeetCode", "type": "video", "url": "https://www.youtube.com/watch?v=Hj_rA0dhr2I" },
+
+      { "skill_key": "trees", "title": "Binary Trees — GFG", "type": "article", "url": "https://www.geeksforgeeks.org/binary-tree-data-structure/" },
+      { "skill_key": "trees", "title": "Graphs & Trees — NeetCode", "type": "video", "url": "https://www.youtube.com/watch?v=tWVWeAqZ0WU" }
     ],
     "projects": [
-      { "skill_key": "trees", "title": "Implement a Trie", "description": "Build a Trie and use it for prefix search", "difficulty": "intermediate" }
+      { "skill_key": "trees", "title": "Implement a Trie", "description": "Prefix search root → node structure", "difficulty": "intermediate" }
     ]
   },
 
@@ -85,156 +113,199 @@
       { "key": "ci", "title": "CI/CD", "description": "GitHub Actions, pipelines", "position": 2, "difficulty": 2 }
     ],
     "edges": [
-      { "from_key": "docker", "to_key": "ci", "note": "Containerize apps before CI pipelines" }
+      { "from_key": "docker", "to_key": "ci" }
     ],
     "resources": [
-      { "skill_key": "docker", "title": "Docker Docs", "type": "docs", "url": "https://docs.docker.com" }
+      { "skill_key": "docker", "title": "Docker — Get started (official)", "type": "docs", "url": "https://docs.docker.com/get-started/" },
+      { "skill_key": "docker", "title": "Docker Crash Course — Traversy Media", "type": "video", "url": "https://www.youtube.com/watch?v=Gjnup-PuquQ" },
+
+      { "skill_key": "ci", "title": "GitHub Actions — Docs", "type": "docs", "url": "https://docs.github.com/en/actions" },
+      { "skill_key": "ci", "title": "CI/CD with GitHub Actions — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=mFFXuXjVgkU" }
     ],
     "projects": [
-      { "skill_key": "docker", "title": "Dockerize App", "description": "Create Dockerfile and run container locally", "difficulty": "beginner" }
+      { "skill_key": "docker", "title": "Dockerize App", "description": "Create Dockerfile and containerize an app", "difficulty": "beginner" }
     ]
   },
 
   {
-  "slug": "fullstack-mern",
-  "title": "Full-Stack Web Development with MERN",
-  "description": "Master the complete MERN stack — MongoDB, Express, React, Node.js — and learn how to build, secure, and deploy scalable web apps.",
-  "skills": [
-    { "key": "javascript", "title": "Modern JavaScript (ES6+)", "description": "Learn async/await, modules, classes, promises", "position": 1, "difficulty": 1 },
-    { "key": "frontend-react", "title": "Frontend with React", "description": "Components, hooks, routing, state management", "position": 2, "difficulty": 2 },
-    { "key": "backend-express", "title": "Backend with Express", "description": "REST APIs, middleware, authentication", "position": 3, "difficulty": 2 },
-    { "key": "database-mongo", "title": "MongoDB & Mongoose", "description": "CRUD operations, schema design, aggregation", "position": 4, "difficulty": 2 },
-    { "key": "deployment", "title": "Deployment & CI/CD", "description": "Deploy apps on Render, Railway, or AWS with GitHub Actions", "position": 5, "difficulty": 3 }
-  ],
-  "edges": [
-    { "from_key": "javascript", "to_key": "frontend-react" },
-    { "from_key": "frontend-react", "to_key": "backend-express" },
-    { "from_key": "backend-express", "to_key": "database-mongo" },
-    { "from_key": "database-mongo", "to_key": "deployment" }
-  ],
-  "resources": [
-    { "skill_key": "javascript", "title": "JavaScript.info", "type": "docs", "url": "https://javascript.info" },
-    { "skill_key": "frontend-react", "title": "React Official Docs (Beta)", "type": "docs", "url": "https://beta.reactjs.org/learn" },
-    { "skill_key": "backend-express", "title": "Express Official Docs", "type": "docs", "url": "https://expressjs.com" },
-    { "skill_key": "database-mongo", "title": "MongoDB University Free Courses", "type": "course", "url": "https://learn.mongodb.com" },
-    { "skill_key": "deployment", "title": "Deploy MERN App to Render (Traversy Media)", "type": "video", "url": "https://www.youtube.com/watch?v=mrHNSanmqQ4" }
-  ],
-  "projects": [
-    { "skill_key": "frontend-react", "title": "MERN Todo App", "description": "Build a simple CRUD app using React & Express", "difficulty": "beginner" },
-    { "skill_key": "backend-express", "title": "JWT Auth System", "description": "Create secure authentication with JWT and bcrypt", "difficulty": "intermediate" },
-    { "skill_key": "deployment", "title": "Deploy Full MERN Stack App", "description": "Containerize and deploy your app to cloud", "difficulty": "advanced" }
-  ]
-},
+    "slug": "fullstack-mern",
+    "title": "Full-Stack Web Development with MERN",
+    "description": "Master the complete MERN stack.",
+    "skills": [
+      { "key": "javascript", "title": "Modern JavaScript", "description": "ES6+, promises, async", "position": 1, "difficulty": 1 },
+      { "key": "frontend-react", "title": "Frontend with React", "description": "Hooks, routing, UI building", "position": 2, "difficulty": 2 },
+      { "key": "backend-express", "title": "Backend with Express", "description": "APIs, middleware", "position": 3, "difficulty": 2 },
+      { "key": "database-mongo", "title": "MongoDB & Mongoose", "description": "CRUD, schemas, models", "position": 4, "difficulty": 2 },
+      { "key": "deployment", "title": "Deployment", "description": "Render, Docker, CI/CD", "position": 5, "difficulty": 3 }
+    ],
+    "edges": [
+      { "from_key": "javascript", "to_key": "frontend-react" },
+      { "from_key": "frontend-react", "to_key": "backend-express" },
+      { "from_key": "backend-express", "to_key": "database-mongo" },
+      { "from_key": "database-mongo", "to_key": "deployment" }
+    ],
+    "resources": [
+      { "skill_key": "javascript", "title": "Eloquent JavaScript", "type": "book", "url": "https://eloquentjavascript.net/" },
+      { "skill_key": "javascript", "title": "Modern JS — javascript.info", "type": "docs", "url": "https://javascript.info/" },
 
-{
-  "slug": "ml-fundamentals",
-  "title": "Machine Learning Fundamentals",
-  "description": "Understand ML from first principles using Python, NumPy, Pandas, Scikit-learn, and visualization libraries.",
-  "skills": [
-    { "key": "python", "title": "Python for Data Science", "description": "NumPy, Pandas, Matplotlib basics", "position": 1, "difficulty": 1 },
-    { "key": "ml-basics", "title": "ML Core Concepts", "description": "Supervised vs unsupervised learning, metrics, bias-variance", "position": 2, "difficulty": 2 },
-    { "key": "models", "title": "Modeling with Scikit-learn", "description": "Linear regression, decision trees, clustering", "position": 3, "difficulty": 2 },
-    { "key": "feature-eng", "title": "Feature Engineering", "description": "Scaling, encoding, dimensionality reduction", "position": 4, "difficulty": 3 },
-    { "key": "evaluation", "title": "Evaluation & Deployment", "description": "Model metrics, overfitting, saving models", "position": 5, "difficulty": 3 }
-  ],
-  "edges": [
-    { "from_key": "python", "to_key": "ml-basics" },
-    { "from_key": "ml-basics", "to_key": "models" },
-    { "from_key": "models", "to_key": "evaluation" }
-  ],
-  "resources": [
-    { "skill_key": "python", "title": "Python for Data Science Handbook (Jake VanderPlas)", "type": "book", "url": "https://jakevdp.github.io/PythonDataScienceHandbook/" },
-    { "skill_key": "ml-basics", "title": "Andrew Ng - ML Course (Coursera)", "type": "course", "url": "https://www.coursera.org/learn/machine-learning" },
-    { "skill_key": "models", "title": "Scikit-learn Official Documentation", "type": "docs", "url": "https://scikit-learn.org/stable/" },
-    { "skill_key": "evaluation", "title": "Kaggle Intro to ML", "type": "course", "url": "https://www.kaggle.com/learn/intro-to-machine-learning" }
-  ],
-  "projects": [
-    { "skill_key": "models", "title": "Predict House Prices", "description": "Build a regression model on housing data", "difficulty": "beginner" },
-    { "skill_key": "evaluation", "title": "Customer Segmentation", "description": "Cluster customer data using KMeans", "difficulty": "intermediate" }
-  ]
-},
+      { "skill_key": "frontend-react", "title": "React Docs", "type": "docs", "url": "https://react.dev/learn" },
+      { "skill_key": "frontend-react", "title": "MERN Stack Crash Course — FCC", "type": "video", "url": "https://www.youtube.com/watch?v=7CqJlxBYj-M" },
 
-{
-  "slug": "cloud-aws",
-  "title": "Cloud & AWS Fundamentals",
-  "description": "Learn how to architect, deploy, and manage applications on AWS using EC2, S3, Lambda, and IAM.",
-  "skills": [
-    { "key": "cloud-basics", "title": "Cloud Computing Basics", "description": "IaaS, PaaS, SaaS, regions, availability zones", "position": 1, "difficulty": 1 },
-    { "key": "aws-core", "title": "AWS Core Services", "description": "EC2, S3, RDS, IAM basics", "position": 2, "difficulty": 2 },
-    { "key": "serverless", "title": "Serverless & Lambda", "description": "Create serverless APIs and event-driven apps", "position": 3, "difficulty": 3 },
-    { "key": "monitoring", "title": "Monitoring & Security", "description": "CloudWatch, IAM roles, encryption", "position": 4, "difficulty": 3 }
-  ],
-  "edges": [
-    { "from_key": "cloud-basics", "to_key": "aws-core" },
-    { "from_key": "aws-core", "to_key": "serverless" },
-    { "from_key": "aws-core", "to_key": "monitoring" }
-  ],
-  "resources": [
-    { "skill_key": "aws-core", "title": "AWS Free Tier Guide", "type": "docs", "url": "https://aws.amazon.com/free/" },
-    { "skill_key": "aws-core", "title": "AWS Skill Builder Courses", "type": "course", "url": "https://skillbuilder.aws/" },
-    { "skill_key": "serverless", "title": "AWS Lambda Developer Guide", "type": "docs", "url": "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html" },
-    { "skill_key": "monitoring", "title": "AWS Well-Architected Framework", "type": "docs", "url": "https://aws.amazon.com/architecture/well-architected/" }
-  ],
-  "projects": [
-    { "skill_key": "aws-core", "title": "Host a Static Website on S3", "description": "Deploy and secure a static site with S3 + CloudFront", "difficulty": "beginner" },
-    { "skill_key": "serverless", "title": "Serverless CRUD API", "description": "Create a Lambda + API Gateway + DynamoDB app", "difficulty": "intermediate" }
-  ]
-},
+      { "skill_key": "backend-express", "title": "Express Docs", "type": "docs", "url": "https://expressjs.com" },
+      { "skill_key": "backend-express", "title": "Express REST API Tutorial", "type": "article", "url": "https://www.section.io/engineering-education/how-to-build-a-rest-api-using-nodejs/" },
 
-{
-  "slug": "mobile-flutter",
-  "title": "Mobile App Development with Flutter",
-  "description": "Build fast, cross-platform mobile apps with Flutter and Dart. Learn UI design, state management, and backend integration.",
-  "skills": [
-    { "key": "dart-basics", "title": "Dart Fundamentals", "description": "Syntax, types, async programming", "position": 1, "difficulty": 1 },
-    { "key": "flutter-ui", "title": "Flutter UI Basics", "description": "Widgets, layouts, navigation", "position": 2, "difficulty": 2 },
-    { "key": "state", "title": "State Management", "description": "Provider, Riverpod, or Bloc", "position": 3, "difficulty": 2 },
-    { "key": "firebase", "title": "Firebase Integration", "description": "Auth, Firestore, hosting", "position": 4, "difficulty": 3 }
-  ],
-  "edges": [
-    { "from_key": "dart-basics", "to_key": "flutter-ui" },
-    { "from_key": "flutter-ui", "to_key": "state" },
-    { "from_key": "state", "to_key": "firebase" }
-  ],
-  "resources": [
-    { "skill_key": "dart-basics", "title": "Dart Language Tour", "type": "docs", "url": "https://dart.dev/guides/language/language-tour" },
-    { "skill_key": "flutter-ui", "title": "Flutter Official Documentation", "type": "docs", "url": "https://flutter.dev/docs" },
-    { "skill_key": "state", "title": "Flutter State Management Explained (Reso Coder)", "type": "video", "url": "https://www.youtube.com/watch?v=d_m5csmrf7I" },
-    { "skill_key": "firebase", "title": "Firebase for Flutter Codelab", "type": "course", "url": "https://firebase.google.com/codelabs/firebase-get-to-know-flutter" }
-  ],
-  "projects": [
-    { "skill_key": "flutter-ui", "title": "Weather App", "description": "Build a weather app using open API", "difficulty": "beginner" },
-    { "skill_key": "firebase", "title": "Chat Application", "description": "Real-time chat with Firebase backend", "difficulty": "intermediate" }
-  ]
-},
+      { "skill_key": "database-mongo", "title": "MongoDB Docs", "type": "docs", "url": "https://www.mongodb.com/docs/" },
+      { "skill_key": "database-mongo", "title": "Mongoose Crash Course", "type": "video", "url": "https://www.youtube.com/watch?v=FGdiSJakIS4" },
 
-{
-  "slug": "ai-llm-developer",
-  "title": "AI & LLM Application Development",
-  "description": "Learn how to build applications powered by Large Language Models using OpenAI, LangChain, and vector databases.",
-  "skills": [
-    { "key": "python-basics", "title": "Python Foundations", "description": "Syntax, libraries, environment management", "position": 1, "difficulty": 1 },
-    { "key": "openai-api", "title": "OpenAI API", "description": "ChatGPT API, completions, embeddings", "position": 2, "difficulty": 2 },
-    { "key": "langchain", "title": "LangChain Framework", "description": "Chains, Agents, Prompts, and Memory", "position": 3, "difficulty": 3 },
-    { "key": "vector-db", "title": "Vector Databases", "description": "Use Pinecone or Chroma for semantic search", "position": 4, "difficulty": 3 },
-    { "key": "deployment", "title": "Deploy AI Apps", "description": "FastAPI, Streamlit, or Next.js + serverless", "position": 5, "difficulty": 3 }
-  ],
-  "edges": [
-    { "from_key": "python-basics", "to_key": "openai-api" },
-    { "from_key": "openai-api", "to_key": "langchain" },
-    { "from_key": "langchain", "to_key": "vector-db" },
-    { "from_key": "vector-db", "to_key": "deployment" }
-  ],
-  "resources": [
-    { "skill_key": "openai-api", "title": "OpenAI API Documentation", "type": "docs", "url": "https://platform.openai.com/docs" },
-    { "skill_key": "langchain", "title": "LangChain Docs", "type": "docs", "url": "https://python.langchain.com/docs/" },
-    { "skill_key": "vector-db", "title": "Pinecone Docs", "type": "docs", "url": "https://docs.pinecone.io/" },
-    { "skill_key": "deployment", "title": "Build AI Apps with Streamlit (Official)", "type": "course", "url": "https://docs.streamlit.io/knowledge-base/tutorials/build-conversational-apps" }
-  ],
-  "projects": [
-    { "skill_key": "langchain", "title": "Chatbot with LangChain", "description": "Create a custom knowledge chatbot using OpenAI & LangChain", "difficulty": "intermediate" },
-    { "skill_key": "deployment", "title": "Deploy AI App", "description": "Host your chatbot on Streamlit Cloud or Vercel", "difficulty": "advanced" }
-  ]
-}
+      { "skill_key": "deployment", "title": "Deploy MERN to Render", "type": "video", "url": "https://www.youtube.com/watch?v=mrHNSanmqQ4" },
+      { "skill_key": "deployment", "title": "Dockerizing MERN App", "type": "video", "url": "https://www.youtube.com/watch?v=J2dB96MUL8s" }
+    ],
+    "projects": [
+      { "skill_key": "frontend-react", "title": "MERN Todo App", "description": "React + Node CRUD app", "difficulty": "beginner" },
+      { "skill_key": "backend-express", "title": "JWT Auth System", "description": "Auth with JWT & bcrypt", "difficulty": "intermediate" },
+      { "skill_key": "deployment", "title": "Deploy MERN App", "description": "Full cloud deployment", "difficulty": "advanced" }
+    ]
+  },
+
+  {
+    "slug": "ml-fundamentals",
+    "title": "Machine Learning Fundamentals",
+    "description": "ML fundamentals using Python, pandas, numpy, sklearn.",
+    "skills": [
+      { "key": "python", "title": "Python for DS", "description": "NumPy, Pandas", "position": 1, "difficulty": 1 },
+      { "key": "ml-basics", "title": "ML Basics", "description": "Supervised/unsupervised", "position": 2, "difficulty": 2 },
+      { "key": "models", "title": "Modeling", "description": "Regression, trees", "position": 3, "difficulty": 2 },
+      { "key": "feature-eng", "title": "Feature Engineering", "description": "Scaling, encoding", "position": 4, "difficulty": 3 },
+      { "key": "evaluation", "title": "Evaluation", "description": "Metrics, overfitting", "position": 5, "difficulty": 3 }
+    ],
+    "edges": [
+      { "from_key": "python", "to_key": "ml-basics" },
+      { "from_key": "ml-basics", "to_key": "models" },
+      { "from_key": "models", "to_key": "evaluation" }
+    ],
+    "resources": [
+      { "skill_key": "python", "title": "Python DS Handbook", "type": "book", "url": "https://jakevdp.github.io/PythonDataScienceHandbook/" },
+      { "skill_key": "python", "title": "Python Full Course — FCC", "type": "video", "url": "https://www.youtube.com/watch?v=rfscVS0vtbw" },
+
+      { "skill_key": "ml-basics", "title": "Andrew Ng ML", "type": "course", "url": "https://www.coursera.org/learn/machine-learning" },
+      { "skill_key": "ml-basics", "title": "StatQuest ML Playlist", "type": "video", "url": "https://www.youtube.com/playlist?list=PLblh5JKOoLUILxfGaQ0xj0xIRd9cYy2-1" },
+
+      { "skill_key": "models", "title": "Scikit-learn Docs", "type": "docs", "url": "https://scikit-learn.org/stable/" },
+      { "skill_key": "models", "title": "Neural Networks intuition — 3Blue1Brown", "type": "video", "url": "https://www.youtube.com/watch?v=aircAruvnKk" },
+
+      { "skill_key": "feature-eng", "title": "Feature Engineering — Kaggle", "type": "course", "url": "https://www.kaggle.com/learn/feature-engineering" },
+      { "skill_key": "evaluation", "title": "ML Explainability — Kaggle", "type": "course", "url": "https://www.kaggle.com/learn/machine-learning-explainability" }
+    ],
+    "projects": [
+      { "skill_key": "models", "title": "House Price Prediction", "description": "Regression model", "difficulty": "beginner" },
+      { "skill_key": "evaluation", "title": "Customer Segmentation", "description": "KMeans clustering", "difficulty": "intermediate" }
+    ]
+  },
+
+  {
+    "slug": "cloud-aws",
+    "title": "Cloud & AWS Fundamentals",
+    "description": "Learn how to architect, deploy, and manage applications on AWS using EC2, S3, Lambda, and IAM.",
+    "skills": [
+      { "key": "cloud-basics", "title": "Cloud Computing Basics", "description": "IaaS, PaaS, SaaS, regions, availability zones", "position": 1, "difficulty": 1 },
+      { "key": "aws-core", "title": "AWS Core Services", "description": "EC2, S3, RDS, IAM basics", "position": 2, "difficulty": 2 },
+      { "key": "serverless", "title": "Serverless & Lambda", "description": "Create serverless APIs and event-driven apps", "position": 3, "difficulty": 3 },
+      { "key": "monitoring", "title": "Monitoring & Security", "description": "CloudWatch, IAM roles, encryption", "position": 4, "difficulty": 3 }
+    ],
+    "edges": [
+      { "from_key": "cloud-basics", "to_key": "aws-core" },
+      { "from_key": "aws-core", "to_key": "serverless" },
+      { "from_key": "aws-core", "to_key": "monitoring" }
+    ],
+    "resources": [
+      { "skill_key": "cloud-basics", "title": "What Is Cloud Computing? — AWS Official", "type": "docs", "url": "https://aws.amazon.com/what-is-cloud-computing/" },
+      { "skill_key": "cloud-basics", "title": "Cloud Computing Full Course — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=mxT233EdY5c" },
+
+      { "skill_key": "aws-core", "title": "AWS Skill Builder — free courses", "type": "course", "url": "https://skillbuilder.aws/" },
+      { "skill_key": "aws-core", "title": "AWS EC2 & S3 Overview — Working Video", "type": "video", "url": "https://www.youtube.com/watch?v=77lMCiiMilo" },
+
+      { "skill_key": "serverless", "title": "AWS Lambda Developer Guide", "type": "docs", "url": "https://docs.aws.amazon.com/lambda/latest/dg/welcome.html" },
+      { "skill_key": "serverless", "title": "Serverless Course — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=3qlnR9hK-lQ" },
+
+      { "skill_key": "monitoring", "title": "AWS Well-Architected Framework", "type": "docs", "url": "https://aws.amazon.com/architecture/well-architected/" },
+      { "skill_key": "monitoring", "title": "IAM & CloudWatch Tutorial — Working Video", "type": "video", "url": "https://www.youtube.com/watch?v=Yxl7e88cTAQ" }
+    ],
+    "projects": [
+      { "skill_key": "aws-core", "title": "Host a Static Website on S3", "description": "Deploy a static site with CloudFront", "difficulty": "beginner" },
+      { "skill_key": "serverless", "title": "Serverless CRUD API", "description": "Lambda + API Gateway + DynamoDB", "difficulty": "intermediate" }
+    ]
+  },
+
+  {
+    "slug": "mobile-flutter",
+    "title": "Mobile App Development with Flutter",
+    "description": "Build fast, cross-platform mobile apps with Flutter and Dart.",
+    "skills": [
+      { "key": "dart-basics", "title": "Dart Fundamentals", "description": "Syntax, types, async", "position": 1, "difficulty": 1 },
+      { "key": "flutter-ui", "title": "Flutter UI Basics", "description": "Widgets, layouts, navigation", "position": 2, "difficulty": 2 },
+      { "key": "state", "title": "State Management", "description": "Provider, Riverpod, Bloc", "position": 3, "difficulty": 2 },
+      { "key": "firebase", "title": "Firebase Integration", "description": "Auth, Firestore", "position": 4, "difficulty": 3 }
+    ],
+    "edges": [
+      { "from_key": "dart-basics", "to_key": "flutter-ui" },
+      { "from_key": "flutter-ui", "to_key": "state" },
+      { "from_key": "state", "to_key": "firebase" }
+    ],
+    "resources": [
+      { "skill_key": "dart-basics", "title": "Dart Language Tour", "type": "docs", "url": "https://dart.dev/guides/language/language-tour" },
+      { "skill_key": "dart-basics", "title": "Dart Crash Course — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=NrO0CJCbYLA" },
+
+      { "skill_key": "flutter-ui", "title": "Flutter Official Docs", "type": "docs", "url": "https://docs.flutter.dev/" },
+      { "skill_key": "flutter-ui", "title": "Flutter UI Course — freeCodeCamp", "type": "video", "url": "https://www.youtube.com/watch?v=VPvVD8t02U8" },
+
+      { "skill_key": "state", "title": "State Management Docs", "type": "docs", "url": "https://docs.flutter.dev/data-and-backend/state-mgmt" },
+      { "skill_key": "state", "title": "Provider State Management — Updated Working Video", "type": "video", "url": "https://www.youtube.com/watch?v=FAQ6U-fh1xw&list=PL3nPgdhXQtHfFl-7fQRrzkKQbS5DPWl_x" },
+
+      { "skill_key": "firebase", "title": "Firebase + Flutter Codelab", "type": "course", "url": "https://firebase.google.com/codelabs/firebase-get-to-know-flutter" },
+      { "skill_key": "firebase", "title": "Flutter + Firebase Crash Course", "type": "video", "url": "https://www.youtube.com/watch?v=EXp0gq9kGxI" }
+    ],
+    "projects": [
+      { "skill_key": "flutter-ui", "title": "Weather App", "description": "API-based UI app", "difficulty": "beginner" },
+      { "skill_key": "firebase", "title": "Chat Application", "description": "Realtime chat using Firebase", "difficulty": "intermediate" }
+    ]
+  },
+
+  {
+    "slug": "ai-llm-developer",
+    "title": "AI & LLM Application Development",
+    "description": "Build applications powered by OpenAI and LangChain.",
+    "skills": [
+      { "key": "python-basics", "title": "Python Foundations", "description": "Syntax, packages", "position": 1, "difficulty": 1 },
+      { "key": "openai-api", "title": "OpenAI API", "description": "ChatGPT, embeddings", "position": 2, "difficulty": 2 },
+      { "key": "langchain", "title": "LangChain", "description": "Chains, agents", "position": 3, "difficulty": 3 },
+      { "key": "vector-db", "title": "Vector Databases", "description": "Pinecone/Chroma", "position": 4, "difficulty": 3 },
+      { "key": "deployment", "title": "Deploy AI Apps", "description": "FastAPI, Streamlit", "position": 5, "difficulty": 3 }
+    ],
+    "edges": [
+      { "from_key": "python-basics", "to_key": "openai-api" },
+      { "from_key": "openai-api", "to_key": "langchain" },
+      { "from_key": "langchain", "to_key": "vector-db" },
+      { "from_key": "vector-db", "to_key": "deployment" }
+    ],
+    "resources": [
+      { "skill_key": "python-basics", "title": "Python Crash Course — FCC", "type": "video", "url": "https://www.youtube.com/watch?v=rfscVS0vtbw" },
+      { "skill_key": "python-basics", "title": "Automate the Boring Stuff", "type": "book", "url": "https://automatetheboringstuff.com/" },
+
+      { "skill_key": "openai-api", "title": "OpenAI Platform Docs", "type": "docs", "url": "https://platform.openai.com/docs" },
+      { "skill_key": "openai-api", "title": "OpenAI API Crash Course — Working", "type": "video", "url": "https://www.youtube.com/watch?v=qbIk7-JPB2c" },
+
+      { "skill_key": "langchain", "title": "LangChain Docs", "type": "docs", "url": "https://python.langchain.com/docs/" },
+      { "skill_key": "langchain", "title": "LangChain Crash Course", "type": "video", "url": "https://www.youtube.com/watch?v=aywZrzNaKjs" },
+
+      { "skill_key": "vector-db", "title": "Pinecone Docs", "type": "docs", "url": "https://docs.pinecone.io/" },
+      { "skill_key": "vector-db", "title": "Vector DB Intro — Pinecone", "type": "article", "url": "https://www.pinecone.io/learn/vector-database/" },
+
+      { "skill_key": "deployment", "title": "Deploy ML/FastAPI apps", "type": "video", "url": "https://www.youtube.com/watch?v=0sOvCWFmrtA" },
+      { "skill_key": "deployment", "title": "Streamlit Docs", "type": "docs", "url": "https://docs.streamlit.io/" }
+    ],
+    "projects": [
+      { "skill_key": "langchain", "title": "Chatbot with LangChain", "description": "Custom knowledge chatbot", "difficulty": "intermediate" },
+      { "skill_key": "deployment", "title": "Deploy AI App", "description": "Deploy chatbot on Streamlit or Vercel", "difficulty": "advanced" }
+    ]
+  }
 ]
-

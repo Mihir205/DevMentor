@@ -107,3 +107,29 @@ CREATE INDEX IF NOT EXISTS idx_predefined_resources_skill ON predefined_resource
 CREATE INDEX IF NOT EXISTS idx_predefined_projects_skill ON predefined_mini_projects(skill_id);
 CREATE INDEX IF NOT EXISTS idx_user_predefined_goals_user ON user_predefined_goals(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_tasks_upg ON user_tasks(user_predefined_goal_id);
+
+-- 1) add metadata column to user_tasks (JSONB)
+ALTER TABLE user_tasks
+  ADD COLUMN IF NOT EXISTS metadata JSONB;
+
+-- 2) create a partial unique index to prevent duplicate source+sourceId for the same user_predefined_goal
+CREATE UNIQUE INDEX IF NOT EXISTS user_tasks_unique_source
+ON user_tasks (user_predefined_goal_id, (metadata->>'source'), (metadata->>'sourceId'))
+WHERE (metadata IS NOT NULL AND (metadata->>'source') IS NOT NULL AND (metadata->>'sourceId') IS NOT NULL);
+
+-- 3) (Optional) If you want to inspect duplicates created earlier:
+-- show groups of duplicates (user_predefined_goal_id, source, sourceId) with count > 1
+SELECT user_predefined_goal_id, metadata->>'source' AS source, metadata->>'sourceId' AS sourceId, COUNT(*) as cnt
+FROM user_tasks
+WHERE metadata IS NOT NULL AND (metadata->>'source') IS NOT NULL AND (metadata->>'sourceId') IS NOT NULL
+GROUP BY user_predefined_goal_id, source, sourceId
+HAVING COUNT(*) > 1;
+
+-- create_user_selected_projects.sql
+CREATE TABLE IF NOT EXISTS user_selected_projects (
+  id SERIAL PRIMARY KEY,
+  user_predefined_goal_id INTEGER NOT NULL REFERENCES user_predefined_goals(id) ON DELETE CASCADE,
+  predefined_project_id INTEGER NOT NULL REFERENCES predefined_mini_projects(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_predefined_goal_id)
+);

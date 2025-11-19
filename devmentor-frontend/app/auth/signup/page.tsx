@@ -23,6 +23,16 @@ export default function SignupPage() {
     setLoading(true);
     setErrorMessage(null); // Clear previous errors
 
+    // --- NEW VALIDATION: Mobile Number Check ---
+    // Use a simple regex to check for exactly 10 digits
+    const mobileRegex = /^\d{10}$/;
+    if (!mobileRegex.test(mobileNo.trim())) {
+      setErrorMessage("Error: Mobile number must be exactly 10 digits.");
+      setLoading(false);
+      return;
+    }
+
+    // --- NEW VALIDATION: Password Match Check ---
     if (password !== confirm) {
       setErrorMessage("Error: Passwords do not match.");
       setLoading(false);
@@ -32,7 +42,14 @@ export default function SignupPage() {
     try {
       const data = await api("/api/auth/register", {
         method: "POST",
-        body: { firstName, lastName, mobileNo, email, password },
+        // Only send the trimmed, validated fields to the API
+        body: { 
+          firstName: firstName.trim(), 
+          lastName: lastName.trim(), 
+          mobileNo: mobileNo.trim(), 
+          email: email.trim(), 
+          password 
+        },
       });
 
       if (data.token) {
@@ -44,6 +61,7 @@ export default function SignupPage() {
 
     } catch (err: any) {
       console.error("Registration API Error:", err);
+      // Fallback message for network/server errors
       setErrorMessage(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
@@ -114,9 +132,15 @@ export default function SignupPage() {
           <div className="relative mb-4">
             <Phone className={iconClass} />
             <input
-              placeholder="Mobile Number"
+              // Use type="tel" for better mobile keyboard experience, but keep validation client-side
+              type="tel"
+              placeholder="Mobile Number (10 digits)"
               value={mobileNo}
               onChange={(e) => setMobileNo(e.target.value)}
+              // Added pattern attribute for immediate visual feedback and browser validation
+              pattern="\d{10}"
+              title="Mobile number must be exactly 10 digits"
+              required
               className={InputClass}
             />
           </div>
@@ -153,7 +177,7 @@ export default function SignupPage() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
-              // Highlight border if passwords don't match
+              // Highlight border if passwords don't match (already existed, kept for visual feedback)
               className={`${InputClass} ${password && confirm && password !== confirm ? "border-red-500 ring-red-500" : ""}`}
             />
           </div>

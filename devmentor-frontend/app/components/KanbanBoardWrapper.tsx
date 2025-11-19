@@ -1,43 +1,147 @@
 // components/KanbanBoardWrapper.tsx
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import api from "../lib/api";
 import { getAuth } from "../lib/auth";
-import { RefreshCw, Zap, XCircle } from "lucide-react";
+import "../styles/KanbanBoard.css";
+import {
+  RefreshCw,
+  Zap,
+  XCircle,
+  Link as LinkIcon,
+  CheckCircle,
+  Target,
+  TrendingUp,
+  Lock,
+  Sparkles,
+} from "lucide-react";
 
 type TaskRow = any;
 type Column = { id: string | number; title: string; statusKey: string; tasks: TaskRow[] };
 
-const DEFAULT_COLUMN_ORDER = ["todo", "inprogress", "done", "blocked"];
+const DEFAULT_COLUMN_ORDER = ["todo", "inprogress", "done"];
 const PRETTY_TITLE: Record<string, string> = {
   todo: "To Do",
   inprogress: "In Progress",
   done: "Done",
-  blocked: "Blocked",
 };
 
-// Helper function to map status key to a color class for the techy badge look
 const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-        case 'done': return 'text-green-500 bg-green-500/10 border-green-500/30';
-        case 'inprogress': return 'text-[--color-primary] bg-[--color-primary]/10 border-[--color-primary]/30';
-        case 'blocked': return 'text-red-500 bg-red-500/10 border-red-500/30';
-        default: return 'text-gray-500 bg-gray-500/10 border-gray-500/30'; // todo
-    }
+  switch (status.toLowerCase()) {
+    case "done":
+      return "text-green-500 bg-green-500/10 border-green-500/30";
+    case "inprogress":
+      return "text-[--color-primary] bg-[--color-primary]/10 border-[--color-primary]/30";
+    default:
+      return "text-gray-500 bg-gray-500/10 border-gray-500/30";
+  }
 };
 
-export default function KanbanBoardWrapper({ userPredefinedGoalId }: { userPredefinedGoalId?: string | string[] }) {
+const getColumnIcon = (statusKey: string) => {
+  switch (statusKey.toLowerCase()) {
+    case "done":
+      return "✓";
+    case "inprogress":
+      return "⚡";
+    default:
+      return "○";
+  }
+};
+
+export default function KanbanBoardWrapper({
+  userPredefinedGoalId,
+  refreshTrigger,
+  onAfterAction,
+}: {
+  userPredefinedGoalId?: string | number | string[] | null;
+  refreshTrigger?: number;
+  onAfterAction?: () => void;
+}) {
+  const router = useRouter();
   const [columns, setColumns] = useState<Column[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { token, user } = getAuth();
-
-  // stable primitive userId
   const userId = user ? ((user as any).id ?? (user as any)._id ?? null) : null;
+
+  const [suggestions, setSuggestions] = useState<any[] | null>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [selectingProject, setSelectingProject] = useState<number | null>(null);
+
+  const [progressInfo, setProgressInfo] = useState<{
+    totalTasks?: number;
+    doneTasks?: number;
+    totalSkills?: number;
+    doneSkills?: number;
+  } | null>(null);
+
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const buildColumnsFromKanban = (kb: any): Column[] => {
+    const isArray = (v: any) => Array.isArray(v);
+    if (kb?.groups && typeof kb.groups === "object") {
+      const order = DEFAULT_COLUMN_ORDER;
+      const base = order.map((k) => ({
+        id: `col-${k}`,
+        statusKey: k,
+        title: PRETTY_TITLE[k] ?? (k[0].toUpperCase() + k.slice(1)),
+        tasks: isArray(kb.groups[k]) ? kb.groups[k] : isArray(kb[k]) ? kb[k] : [],
+      }));
+      const extras = Object.keys(kb.groups).filter((k) => !order.includes(k) && k !== "blocked");
+      extras.forEach((k) =>
+        base.push({
+          id: `col-${k}`,
+          statusKey: k,
+          title: PRETTY_TITLE[k] ?? k,
+          tasks: isArray(kb.groups[k]) ? kb.groups[k] : [],
+        })
+      );
+      return base;
+    }
+
+    const hasDirectColumns = DEFAULT_COLUMN_ORDER.some((k) => isArray(kb[k]));
+    if (hasDirectColumns) {
+      const base = DEFAULT_COLUMN_ORDER.map((k) => ({
+        id: `col-${k}`,
+        statusKey: k,
+        title: PRETTY_TITLE[k] ?? (k[0].toUpperCase() + k.slice(1)),
+        tasks: isArray(kb[k]) ? kb[k] : [],
+      }));
+      const extras = Object.keys(kb).filter((k) => !DEFAULT_COLUMN_ORDER.includes(k) && k !== "blocked");
+      extras.forEach((k) =>
+        base.push({
+          id: `col-${k}`,
+          statusKey: k,
+          title: PRETTY_TITLE[k] ?? k,
+          tasks: isArray(kb[k]) ? kb[k] : [],
+        })
+      );
+      return base;
+    }
+
+    if (Array.isArray(kb?.tasks)) {
+      const grouped: Record<string, TaskRow[]> = { todo: [], inprogress: [], done: [] };
+      for (const r of kb.tasks) {
+        const s = (r.status ?? "todo").toLowerCase();
+        if (s !== "blocked" && !grouped[s]) grouped[s] = [];
+        if (s !== "blocked") grouped[s].push(r);
+      }
+      return DEFAULT_COLUMN_ORDER.map((k) => ({
+        id: `col-${k}`,
+        statusKey: k,
+        title: PRETTY_TITLE[k] ?? k,
+        tasks: grouped[k] ?? [],
+      }));
+    }
+
+    return DEFAULT_COLUMN_ORDER.map((k) => ({ id: `col-${k}`, statusKey: k, title: PRETTY_TITLE[k], tasks: [] }));
+  };
 
   const fetchBoard = useCallback(async () => {
     if (!userPredefinedGoalId || !token || !userId) {
-      setColumns([]);
+      setColumns(DEFAULT_COLUMN_ORDER.map((k) => ({ id: `col-${k}`, statusKey: k, title: PRETTY_TITLE[k], tasks: [] })));
       return;
     }
     setLoading(true);
@@ -45,75 +149,130 @@ export default function KanbanBoardWrapper({ userPredefinedGoalId }: { userPrede
     try {
       const endpoint = `/api/users/${userId}/predefined-goals/${userPredefinedGoalId}/kanban`;
       const resp = await api(endpoint, { method: "GET", headers: { Authorization: `Bearer ${token}` } });
-      const kb = resp?.kanban ?? resp?.data?.kanban ?? resp ?? {};
-      
-      const baseCols: Column[] = DEFAULT_COLUMN_ORDER.map(k => ({
-        id: `col-${k}`,
-        statusKey: k,
-        title: PRETTY_TITLE[k] ?? (k[0].toUpperCase() + k.slice(1)),
-        tasks: Array.isArray(kb[k]) ? kb[k] : [],
-      }));
-
-      // include any extra server keys (non-destructive)
-      const extraKeys = Object.keys(kb || {}).filter(k => !DEFAULT_COLUMN_ORDER.includes(k));
-      for (const k of extraKeys) {
-        baseCols.push({ 
-            id: `col-${k}`, 
-            statusKey: k,
-            title: PRETTY_TITLE[k] ?? (k[0].toUpperCase() + k.slice(1)), 
-            tasks: Array.isArray(kb[k]) ? kb[k] : [] 
-        });
-      }
-
-      setColumns(baseCols.map(c => ({ id: c.id, statusKey: c.statusKey, title: c.title, tasks: c.tasks })));
+      const kb = resp?.kanban ?? resp ?? {};
+      const cols = buildColumnsFromKanban(kb);
+      setColumns(cols.map((c) => ({ id: c.id, statusKey: c.statusKey, title: c.title, tasks: Array.isArray(c.tasks) ? c.tasks : [] })));
     } catch (err: any) {
       console.error("Kanban fetch error:", err);
       setError(err?.message ?? "Failed to fetch kanban board");
-      setColumns([]);
+      setColumns(DEFAULT_COLUMN_ORDER.map((k) => ({ id: `col-${k}`, statusKey: k, title: PRETTY_TITLE[k], tasks: [] })));
     } finally {
       setLoading(false);
     }
   }, [userPredefinedGoalId, token, userId]);
 
-  useEffect(() => { fetchBoard(); }, [fetchBoard]);
+  useEffect(() => {
+    fetchBoard();
+  }, [fetchBoard, refreshTrigger]);
 
-  // Helper: optimistic UI update for a task move (returns previous state so we can revert if needed)
+  const fetchSuggestions = useCallback(async () => {
+    if (!userPredefinedGoalId || !token || !userId) {
+      setSuggestions([]);
+      return;
+    }
+    setLoadingSuggestions(true);
+    try {
+      const resp = await api(`/api/users/${userId}/predefined-goals/${userPredefinedGoalId}/suggestions`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSuggestions(resp?.suggestions ?? []);
+    } catch (err) {
+      console.error("fetch suggestions failed", err);
+      setSuggestions([]);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  }, [userPredefinedGoalId, token, userId]);
+
+  useEffect(() => {
+    fetchSuggestions();
+  }, [fetchSuggestions, refreshTrigger]);
+
+  const fetchSelectedProject = useCallback(async () => {
+    if (!userPredefinedGoalId || !token || !userId) {
+      setSelectedProject(null);
+      return;
+    }
+    try {
+      const res = await api(`/api/users/${userId}/predefined-goals/${userPredefinedGoalId}/selected`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res?.selected) setSelectedProject(res.selected);
+      else setSelectedProject(null);
+    } catch (err) {
+      setSelectedProject(null);
+    }
+  }, [userPredefinedGoalId, token, userId]);
+
+  useEffect(() => {
+    fetchSelectedProject();
+  }, [fetchSelectedProject, refreshTrigger]);
+
+  const checkProgress = useCallback(async () => {
+    if (!userPredefinedGoalId || !token || !userId) return;
+    try {
+      const resp = await api(`/api/users/${userId}/predefined-goals/${userPredefinedGoalId}/progress`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const totalTasks = Number(resp?.totalTasks ?? resp?.total_tasks ?? 0);
+      const doneTasks = Number(resp?.doneTasks ?? resp?.done_tasks ?? 0);
+      const totalSkills = Number(resp?.totalSkills ?? resp?.total_skills ?? 0);
+      const doneSkills = Number(resp?.doneSkills ?? resp?.done_skills ?? 0);
+
+      setProgressInfo({
+        totalTasks,
+        doneTasks,
+        totalSkills,
+        doneSkills,
+      });
+    } catch (err) {
+      console.warn("checkProgress failed", err);
+    }
+  }, [userPredefinedGoalId, token, userId]);
+
+  useEffect(() => {
+    if (userPredefinedGoalId) {
+      checkProgress();
+    }
+  }, [checkProgress, refreshTrigger, columns]);
+
   function optimisticMove(taskId: string | number, toStatus: string) {
-    const prev = columns.map(c => ({ id: c.id, statusKey: c.statusKey, title: c.title, tasks: [...c.tasks] }));
+    const prev = columns.map((c) => ({ id: c.id, statusKey: c.statusKey, title: c.title, tasks: [...c.tasks] }));
     let movedTask: any = null;
-    const newCols = prev.map(c => {
+    const newCols = prev.map((c) => {
       const idx = c.tasks.findIndex((t: any) => String(t.id) === String(taskId));
-      if (idx >= 0) {
-        movedTask = c.tasks.splice(idx, 1)[0];
-      }
+      if (idx >= 0) movedTask = c.tasks.splice(idx, 1)[0];
       return c;
     });
     if (!movedTask) return { prev, applied: false };
-    
-    // Convert target status to key (e.g., 'To Do' -> 'todo')
-    const targetStatusKey = DEFAULT_COLUMN_ORDER.find(key => key.toLowerCase() === toStatus.toLowerCase() || PRETTY_TITLE[key].toLowerCase() === toStatus.toLowerCase()) || toStatus;
 
-    movedTask.status = targetStatusKey;
-    const targetIdx = newCols.findIndex(c => c.statusKey === targetStatusKey);
-
+    const targetKey = DEFAULT_COLUMN_ORDER.find((key) => key.toLowerCase() === toStatus.toLowerCase()) ?? toStatus;
+    movedTask.status = targetKey;
+    const targetIdx = newCols.findIndex((c) => c.statusKey === targetKey);
     if (targetIdx >= 0) newCols[targetIdx].tasks.push(movedTask);
-    else {
-      // Fallback: If status is new, create a new column (should rarely happen)
-      const created = { id: `col-${targetStatusKey}`, statusKey: targetStatusKey, title: PRETTY_TITLE[targetStatusKey] ?? targetStatusKey, tasks: [movedTask] };
-      newCols.push(created);
-    }
+    else newCols.push({ id: `col-${targetKey}`, statusKey: targetKey, title: PRETTY_TITLE[targetKey] ?? targetKey, tasks: [movedTask] });
+
     setColumns(newCols);
     return { prev, applied: true };
   }
 
   async function persistMove(taskId: string | number, toStatus: string) {
-    if (!token || !userId) { setError("Not authenticated"); return false; }
+    if (!token || !userId) {
+      setError("Not authenticated");
+      return false;
+    }
     try {
       await api(`/api/users/${userId}/tasks/${taskId}/move`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
         body: { status: toStatus },
       });
+      onAfterAction?.();
+      setTimeout(() => checkProgress(), 250);
       return true;
     } catch (err) {
       console.error("Persist move failed:", err);
@@ -123,47 +282,44 @@ export default function KanbanBoardWrapper({ userPredefinedGoalId }: { userPrede
 
   async function changeStatus(taskId: string | number, toStatus: string) {
     const { prev, applied } = optimisticMove(taskId, toStatus);
-    if (!applied) { await fetchBoard(); return; }
-
+    if (!applied) {
+      await fetchBoard();
+      return;
+    }
     const ok = await persistMove(taskId, toStatus);
     if (!ok) {
       setColumns(prev);
       setError("Failed to move task on server. Reverting.");
-      // NOTE: Using setError state instead of alert() for professional UI feedback
     }
   }
 
-  // drag & drop handlers
   function onDragStart(ev: React.DragEvent, taskId: string | number) {
     ev.dataTransfer.setData("text/plain", String(taskId));
-    // Added a class to the element being dragged for visual feedback
-    if (ev.currentTarget) ev.currentTarget.classList.add('opacity-40');
-    ev.dataTransfer.effectAllowed = "move";
+    if (ev.currentTarget) ev.currentTarget.classList.add("opacity-40");
   }
   function onDragEnd(ev: React.DragEvent) {
-    if (ev.currentTarget) ev.currentTarget.classList.remove('opacity-40');
+    if (ev.currentTarget) ev.currentTarget.classList.remove("opacity-40");
   }
-  function onDragOver(ev: React.DragEvent) { ev.preventDefault(); ev.dataTransfer.dropEffect = "move"; }
-  
+  function onDragOver(ev: React.DragEvent) {
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+  }
+
   async function onDrop(ev: React.DragEvent, columnStatusKey: string) {
     ev.preventDefault();
     const id = ev.dataTransfer.getData("text/plain");
     if (!id) return;
-
-    // Use the status key directly from the column object (e.g., 'todo', 'inprogress')
-    const targetKey = columnStatusKey; 
-    
-    const { applied } = optimisticMove(id, targetKey);
-    if (!applied) { await fetchBoard(); return; }
-    
-    const ok = await persistMove(id, targetKey);
-    if (!ok) await fetchBoard(); // Re-fetch on server failure
+    const { applied } = optimisticMove(id, columnStatusKey);
+    if (!applied) {
+      await fetchBoard();
+      return;
+    }
+    const ok = await persistMove(id, columnStatusKey);
+    if (!ok) await fetchBoard();
   }
 
-  // UI: per-card status dropdown
   function StatusSelector({ task }: { task: any }) {
     const cur = (task?.status ?? "todo").toLowerCase();
-    
     return (
       <select
         aria-label="Change task status"
@@ -173,111 +329,368 @@ export default function KanbanBoardWrapper({ userPredefinedGoalId }: { userPrede
           if (v === cur) return;
           changeStatus(task.id, v);
         }}
-        // Techy, focused select styling
-        className="px-2 py-1 text-xs rounded-lg border border-[--color-border] bg-[--color-card-bg] text-[--color-foreground] focus:ring-1 focus:ring-[--color-accent] focus:border-[--color-accent] transition-all cursor-pointer"
+        className="kanban-status-select"
       >
-        {DEFAULT_COLUMN_ORDER.map(k => (
-            <option key={k} value={k}>{PRETTY_TITLE[k]}</option>
+        {DEFAULT_COLUMN_ORDER.map((k) => (
+          <option key={k} value={k}>
+            {PRETTY_TITLE[k]}
+          </option>
         ))}
       </select>
     );
   }
-  
-  // UI: Kanban Task Card
+
   function KanbanTaskCard({ task }: { task: any }) {
+    const isProject = Boolean(task.predefined_project_id != null || (task.metadata && task.metadata.source === "predefined_project"));
+    const matchesSelectedProject =
+      isProject &&
+      selectedProject &&
+      (Number(selectedProject.predefined_project_id ?? selectedProject.predefined_project_id) === Number(task.predefined_project_id) ||
+        String(selectedProject.predefined_project_id) === String(task.metadata?.sourceId));
+
     const statusColor = getStatusColor((task.status ?? "todo").toLowerCase());
+
+    const dragProps = isProject
+      ? {}
+      : {
+        draggable: true,
+        onDragStart: (e: React.DragEvent) => onDragStart(e, task.id),
+        onDragEnd: onDragEnd,
+      };
+
+    if (isProject && !matchesSelectedProject && selectedProject) return null;
+
     return (
-        <div
-            key={task.id}
-            draggable
-            onDragStart={(e) => onDragStart(e, task.id)}
-            onDragEnd={onDragEnd}
-            className={`
-                card-border p-4 bg-[--color-card-bg] shadow-md hover:shadow-lg transition-all 
-                duration-200 cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-[--color-accent]/50
-            `}
-        >
-            <div className="flex justify-between items-start gap-3">
-                
-                {/* Task Content */}
-                <div className="flex-1">
-                    <div className="font-bold text-[--color-foreground] mb-1">{task.title}</div>
-                    {task.description && (
-                        <div className="text-xs text-[--color-foreground] opacity-70 mb-2">{task.description}</div>
-                    )}
-                </div>
-
-                {/* Status/Actions */}
-                <div className="flex flex-col gap-2 items-end">
-                    
-                    {/* Status Badge */}
-                    <div className={`text-xs font-semibold py-0.5 px-2 rounded-full border ${statusColor}`}>
-                        {PRETTY_TITLE[task.status] || task.status}
-                    </div>
-
-                    {/* Status Selector Dropdown */}
-                    <StatusSelector task={task} />
-                    
-                    {/* Quick Move Button */}
-                    <button
-                        onClick={() => {
-                            const order = ["todo", "inprogress", "done", "blocked"];
-                            const curIndex = order.indexOf((task.status ?? "todo").toLowerCase());
-                            const next = order[Math.min(curIndex + 1, order.length - 1)];
-                            changeStatus(task.id, next);
-                        }}
-                        className="flex items-center text-xs font-medium text-[--color-primary] hover:text-[--color-accent] transition-colors"
-                    >
-                        <Zap className="w-3 h-3 mr-1" /> Quick Move
-                    </button>
-                </div>
-            </div>
-            {/* Techy ID Display */}
-            <div className="mt-3 text-[10px] text-[--color-foreground] opacity-50 font-mono">ID: {String(task.id)}</div>
+      <div {...(dragProps as any)} className={`kanban-task-card ${isProject ? "kanban-task-project" : ""}`}>
+        <div className="task-card-header">
+          <div className="task-card-title-wrapper">
+            <div className="task-card-title">{task.title}</div>
+            {isProject && <div className="task-project-badge">Final Project</div>}
+          </div>
         </div>
+
+        {task.description && <div className="task-card-description">{task.description}</div>}
+
+        <div className="task-card-footer">
+          <div className={`task-status-badge ${statusColor}`}>{PRETTY_TITLE[task.status] ?? task.status}</div>
+
+          {!isProject ? (
+            <div className="task-actions">
+              <StatusSelector task={task} />
+              <button
+                onClick={() => {
+                  const order = ["todo", "inprogress", "done"];
+                  const curIndex = order.indexOf((task.status ?? "todo").toLowerCase());
+                  const next = order[Math.min(curIndex + 1, order.length - 1)];
+                  changeStatus(task.id, next);
+                }}
+                className="task-quick-move"
+              >
+                <Zap className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <div className="task-project-note">Not counted in progress</div>
+          )}
+        </div>
+      </div>
     );
   }
 
+  const injectSelectedProjectIntoColumns = (cols: Column[]) => {
+    if (!selectedProject) return cols;
+
+    const syntheticTask = {
+      id: `proj-${selectedProject.predefined_project_id}`,
+      predefined_project_id: selectedProject.predefined_project_id,
+      title: selectedProject.title,
+      description: selectedProject.description ?? null,
+      status: "todo",
+      difficulty: selectedProject.difficulty ?? "beginner",
+      metadata: { source: "predefined_project", sourceId: String(selectedProject.predefined_project_id) },
+    };
+
+    const cleaned = cols.map((c) => ({
+      ...c,
+      tasks: c.tasks.filter((t: any) => {
+        const isProject = Boolean(t.predefined_project_id != null || (t.metadata && t.metadata.source === "predefined_project"));
+        if (!isProject) return true;
+        return String(t.predefined_project_id) === String(selectedProject.predefined_project_id) || String(t.metadata?.sourceId) === String(selectedProject.predefined_project_id);
+      }),
+    }));
+
+    const todoIdx = cleaned.findIndex((c) => c.statusKey === "todo");
+    if (todoIdx >= 0) {
+      const exists = cleaned[todoIdx].tasks.some((t: any) => String(t.predefined_project_id) === String(selectedProject.predefined_project_id) || String(t.metadata?.sourceId) === String(selectedProject.predefined_project_id) || String(t.id) === String(syntheticTask.id));
+      if (!exists) cleaned[todoIdx].tasks.unshift(syntheticTask);
+    } else {
+      cleaned.unshift({ id: `col-todo`, statusKey: "todo", title: PRETTY_TITLE["todo"], tasks: [syntheticTask] });
+    }
+
+    return cleaned;
+  };
+
+  useEffect(() => {
+    setColumns((prev) => injectSelectedProjectIntoColumns(prev));
+  }, [selectedProject]);
+
+  useEffect(() => {
+    (async () => {
+      await Promise.resolve();
+      setColumns((prev) => injectSelectedProjectIntoColumns(prev));
+    })();
+  }, [refreshTrigger]);
+
+  // --- Progress percentage calculation (fixed)
+  const progressPercentage = (() => {
+    if (!progressInfo) return 0;
+
+    const totalSkills = Number(progressInfo.totalSkills ?? 0);
+    const doneSkills = Number(progressInfo.doneSkills ?? 0);
+    const totalTasks = Number(progressInfo.totalTasks ?? 0);
+    const doneTasks = Number(progressInfo.doneTasks ?? 0);
+
+    if (totalSkills > 0) {
+      return Math.round((doneTasks / totalSkills) * 100);
+    } else if (totalTasks > 0) {
+      return Math.round((doneTasks / totalSkills) * 100);
+    }
+    return 0;
+  })();
+
+  const canSelectProjects = progressPercentage === 100;
+
+  // replace existing handleSelectProject with this implementation
+  const handleSelectProject = async (projectId: number) => {
+    try {
+      setError(null);
+
+      if (!userId || !token || !userPredefinedGoalId) {
+        setError("Not authenticated or missing context.");
+        return;
+      }
+
+      // Directly POST selection (no progress checks)
+      setSelectingProject(projectId);
+      const body = { predefinedProjectId: projectId };
+      const sel = await api(
+        `/api/users/${userId}/predefined-goals/${userPredefinedGoalId}/select-project`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body,
+        }
+      );
+
+      console.debug("[selectProject] response", sel);
+
+      // Refresh selection & board after success
+      await fetchSelectedProject();
+      await fetchBoard();
+      onAfterAction?.();
+
+      setError(null);
+    } catch (err: any) {
+      console.error("handleSelectProject failed", err);
+      const msg = err?.message ?? (err?.body && (err.body.error || err.body.message)) ?? "Failed to select project";
+      setError(msg);
+    } finally {
+      setSelectingProject(null);
+    }
+  };
+
   return (
-    <div className="mt-4">
-        {/* Error/Loading Feedback */}
-        <div className="mb-4">
-            {loading && <div className="flex items-center text-[--color-primary] font-medium"><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Loading Kanban Board...</div>}
-            {error && <div className="flex items-center text-red-500 font-medium bg-red-500/10 border border-red-500 p-3 rounded-lg"><XCircle className="w-4 h-4 mr-2" /> {error}</div>}
+    <div className="kanban-wrapper">
+      {error && (
+        <div className="kanban-error-banner">
+          <XCircle className="w-5 h-5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {loading && (
+        <div className="kanban-loading">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span>Loading board...</span>
+        </div>
+      )}
+
+      {/* Progress Bar at Top */}
+      <div className="progress-top-section">
+        <div className="progress-header">
+          <div className="progress-icon-wrapper">
+            <TrendingUp className="w-6 h-6" />
+          </div>
+          <div className="progress-info">
+            <h3 className="progress-title">Your Progress</h3>
+            <p className="progress-subtitle">
+              {(() => {
+                const totalSkills = Number(progressInfo?.totalSkills ?? 0);
+                const doneSkills = Number(progressInfo?.doneSkills ?? 0);
+                const totalTasks = Number(progressInfo?.totalTasks ?? 0);
+                const doneTasks = Number(progressInfo?.doneTasks ?? 0);
+
+                if (totalSkills > 0) return `${doneSkills} of ${totalSkills} skills completed`;
+                return `${doneTasks} of ${totalTasks} tasks completed`;
+              })()}
+            </p>
+          </div>
+          <div className="progress-percentage">{progressPercentage}%</div>
         </div>
 
-      <div className="flex gap-4 items-start overflow-x-auto pb-4">
-        {columns.map(col => (
-          <div 
-            key={col.id} 
-            // Standard column width for professional Kanban look (min-w-80 = 320px)
-            className="min-w-80 flex-shrink-0 w-80 bg-[--color-card-bg] rounded-xl p-4 shadow-xl"
-            onDragOver={onDragOver} 
-            // Use the statusKey for the drop target
-            onDrop={(e) => onDrop(e, col.statusKey)}
-          >
-            {/* Column Header */}
-            <div className="flex justify-between items-center mb-4 pb-2 border-b border-[--color-border]">
-              <div className={`text-xl font-extrabold text-[--color-primary] tracking-tight`}>
-                {col.title}
-              </div>
-              <div className="text-sm font-semibold py-1 px-3 rounded-full text-[--color-foreground] opacity-70 bg-[--color-border]">{col.tasks.length}</div>
-            </div>
-
-            {/* Task Container (Drop Zone) */}
-            <div className="min-h-[100px] flex flex-col gap-3">
-              {col.tasks.map((t: any) => (
-                <KanbanTaskCard key={t.id} task={t} />
-              ))}
-
-              {col.tasks.length === 0 && (
-                <div className="text-[--color-foreground] opacity-50 p-4 border border-dashed border-[--color-border] rounded-lg text-center text-sm">
-                  Drag tasks here or use the quick add button.
-                </div>
-              )}
-            </div>
+        <div className="progress-bar-container">
+          <div className="progress-bar-track">
+            <div
+              className="progress-bar-fill"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
-        ))}
+        </div>
+
+        {canSelectProjects && (
+          <div className="progress-complete-banner">
+            <CheckCircle className="w-5 h-5" />
+            <span>100% — Final projects unlocked. Pick one below.</span>
+          </div>
+        )}
+      </div>
+
+      {/* Kanban Board */}
+      <div className="kanban-board">
+        <div className="kanban-columns">
+          {columns.map((col) => (
+            <div key={col.id} className="kanban-column" onDragOver={onDragOver} onDrop={(e) => onDrop(e, col.statusKey)}>
+              <div className="kanban-column-header">
+                <div className="column-header-content">
+                  <span className="column-icon">{getColumnIcon(col.statusKey)}</span>
+                  <h3 className="column-title">{col.title}</h3>
+                </div>
+                <div className="column-count">{col.tasks.length}</div>
+              </div>
+
+              <div className="kanban-column-body">
+                {col.tasks.length > 0 ? col.tasks.map((t: any) => <KanbanTaskCard key={t.id} task={t} />) : (
+                  <div className="column-empty-state">
+                    <div className="empty-icon">📋</div>
+                    <p>No tasks yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Projects Section Below Board */}
+      <div className="projects-section">
+        <div className="projects-header">
+          <div className="projects-title-wrapper">
+            <Target className="w-6 h-6" />
+            <h2 className="projects-title">Final Projects</h2>
+            {!canSelectProjects && <Lock className="w-5 h-5 text-gray-400" />}
+          </div>
+          <button
+            onClick={() => {
+              fetchSuggestions();
+              fetchSelectedProject();
+              checkProgress();
+            }}
+            className="refresh-projects-btn"
+            disabled={loadingSuggestions}
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingSuggestions ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        {!canSelectProjects && (
+          <div className="projects-locked-state">
+            <Lock className="w-12 h-12 text-gray-300" />
+            <h3>Projects Locked</h3>
+            <p>Reach 100% progress to unlock final projects</p>
+          </div>
+        )}
+
+        {canSelectProjects && loadingSuggestions && (
+          <div className="projects-loading">
+            <RefreshCw className="w-6 h-6 animate-spin" />
+            <span>Loading projects...</span>
+          </div>
+        )}
+
+        {canSelectProjects && !loadingSuggestions && suggestions && suggestions.length > 0 && (
+          <div className="projects-grid">
+            {suggestions.map((project) => {
+              const isSelected = selectedProject &&
+                (Number(selectedProject.predefined_project_id) === Number(project.id) ||
+                  String(selectedProject.predefined_project_id) === String(project.id));
+              const isSelecting = selectingProject === project.id;
+
+              return (
+                <div
+                  key={project.id}
+                  className={`project-card ${isSelected ? 'project-card-selected' : ''} ${isSelecting ? 'project-card-loading' : ''}`}
+                  onClick={() => !isSelected && !isSelecting && handleSelectProject(project.id)}
+                >
+                  {isSelected && (
+                    <div className="project-selected-badge">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Selected</span>
+                    </div>
+                  )}
+
+                  <div className="project-card-header">
+                    <h3 className="project-card-title">{project.title}</h3>
+                    <div className={`project-difficulty ${project.difficulty?.toLowerCase() || 'beginner'}`}>
+                      {project.difficulty || 'Beginner'}
+                    </div>
+                  </div>
+
+                  {project.description && (
+                    <p className="project-card-description">{project.description}</p>
+                  )}
+
+                  {project.link && (
+                    <a
+                      href={project.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="project-link"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <LinkIcon className="w-4 h-4" />
+                      <span>View Details</span>
+                    </a>
+                  )}
+
+                  {!isSelected && (
+                    <button className="project-select-btn" disabled={isSelecting}>
+                      {isSelecting ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Selecting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>Select Project</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {canSelectProjects && !loadingSuggestions && (!suggestions || suggestions.length === 0) && (
+          <div className="projects-empty-state">
+            <Target className="w-12 h-12 text-gray-300" />
+            <h3>No Projects Available</h3>
+            <p>Check back later for final project suggestions</p>
+          </div>
+        )}
       </div>
     </div>
   );

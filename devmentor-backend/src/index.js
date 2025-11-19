@@ -8,6 +8,7 @@ dotenv.config();
 import authRoutes from "./routes/authRoutes.js";
 import predefinedGoalRoutes from "./routes/predefinedGoalRoutes.js";
 import userPredefinedGoalRoutes from "./routes/userPredefinedGoalRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 app.use(cors());
@@ -17,6 +18,7 @@ app.use(bodyParser.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/predefined-goals", predefinedGoalRoutes);
 app.use("/api/users", userPredefinedGoalRoutes);
+app.use("/api/admin", adminRoutes);
 
 // health
 app.get("/", (req, res) => res.json({ ok: true, msg: "DevMentor API (guided-only)" }));
